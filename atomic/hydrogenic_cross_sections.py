@@ -64,7 +64,10 @@ class HydrogenicData:
         self.__CROSS_EQ = {
 
             '10': lambda e, par: 5.984e-16/e*(par[0]+par[1]/(e/10.2)+par[2]/(e/10.2)**2 +
-                                              par[3]/(e/10.2)**3+par[4]/(e/10.2)**4+par[5]*np.log(e/10.2)),
+                                              par[3]/(e/10.2)**3+par[4]/(e/10.2)**4+par[5]*np.log(e/10.2)) *
+                                              (0.5*np.tanh(1e4*(e-12.23))+0.5) +                                        #swithching bettween two functions with the help of
+                                              (0.5*np.tanh(-1e4*(e-12.23))+0.5) *                                       #tanh weighing functions
+                                              1e-16*(0.141 + 0.129*(e-10.2)),
 
             '11': lambda e, par: 5.984e-16/e*((e-par[6])/e)**par[5]*(par[0]+par[1]/(e/par[6])+par[2]/(e/par[6])**2 +
                                                                      par[3]/(e/par[6])**3+par[4]*np.log(e/par[6])),
