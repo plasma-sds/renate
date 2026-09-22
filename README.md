@@ -27,7 +27,7 @@ RENATE-OD is being developed under the GPL. However, to avoid misuse, we ask tha
 ## Bibliography
 ### General
 
-Asztalos, O., Model-Aided Design and Interpretation of Beam Emission Spectroscopy Measurements on Fusion Devices, PhD dissertation, Budapest University of Technology and Economics (2023)
+Asztalos, O., Model-Aided Design and Interpretation of Beam Emission Spectroscopy Measurements on Fusion Devices, PhD dissertation, Budapest University of Technology and Economics (2023), http://hdl.handle.net/10890/18710
 
 ### Beam Modelling
 
@@ -77,6 +77,6 @@ Jalalvand, A. et al., Application of neural networks in beam emission spectrosco
 
 ### Hungarian
 
-Guszejnov, D., Pokol, G., Pusztai, I., A RENATE atomnyaláb diagnosztika szimuláció általánosítása és alkalmazása az ITER diagnosztikai nyalábjára, NUKLEON IV : 2 Paper: 87 (2011)
+Guszejnov, D., Pokol, G., Pusztai, I., A RENATE atomnyaláb diagnosztika szimuláció általánosítása és alkalmazása az ITER diagnosztikai nyalábjára, NUKLEON IV : 2 Paper: 87 (2011), https://nuklearis.hu/sites/default/files/nukleon/nukleon_4_2_2011_majus.pdf
 
-Guszejnov, D. et al., A COMPASS tokamakra építendő atomnyaláb diagnosztika tervezésének támogatása szimulációk segítségével, NUKLEON III : 2 Paper: 61 (2010)
+Guszejnov, D. et al., A COMPASS tokamakra építendő atomnyaláb diagnosztika tervezésének támogatása szimulációk segítségével, NUKLEON III : 2 Paper: 61 (2010), https://nuklearis.hu/sites/default/files/nukleon/Nukleon_3_2_61_Guszejnov.pdf
