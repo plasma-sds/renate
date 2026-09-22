@@ -27,11 +27,11 @@ RENATE-OD is being developed under the GPL. However, to avoid misuse, we ask tha
 ## Bibliography
 ### General
 
-Asztalos, O., Model-Aided Design and Interpretation of Beam Emission Spectroscopy Measurements on Fusion Devices, PhD dissertation, Budapest University of Technology and Economics (2023), http://hdl.handle.net/10890/18710
+<u>Asztalos, O.</u>, Model-Aided Design and Interpretation of Beam Emission Spectroscopy Measurements on Fusion Devices, [PhD dissertation](http://hdl.handle.net/10890/18710), Budapest University of Technology and Economics (2023)
 
 ### Beam Modelling
 
-Hill, C. et al., Atomic collisional data for neutral beam modeling in fusion plasmas, NUCLEAR FUSION 63 Paper: 125001 (2023), https://doi.org/10.1088/1741-4326/acf5da
+Hill, C. *et al.*, Atomic collisional data for neutral beam modeling in fusion plasmas, NUCLEAR FUSION 63 [Paper: 125001]( https://doi.org/10.1088/1741-4326/acf5da) (2023)
 
 Asztalos, O. et al., The modeling of atom-neutral collisions for beam emission spectroscopy applications, THE EUROPEAN PHYSICAL JOURNAL D 73 Paper: 116 (2019), https://doi.org/10.1140/epjd/e2019-90690-2
 
