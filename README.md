@@ -27,7 +27,7 @@ RENATE-OD is being developed under the GPL. However, to avoid misuse, we ask tha
 ## Bibliography
 ### General
 
-<u>Asztalos, O.</u>, Model-Aided Design and Interpretation of Beam Emission Spectroscopy Measurements on Fusion Devices, [PhD dissertation](http://hdl.handle.net/10890/18710), Budapest University of Technology and Economics (2023)
+Asztalos, O., Model-Aided Design and Interpretation of Beam Emission Spectroscopy Measurements on Fusion Devices, [PhD dissertation](http://hdl.handle.net/10890/18710), Budapest University of Technology and Economics (2023)
 
 ### Beam Modelling
 
