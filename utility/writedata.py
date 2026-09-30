@@ -36,8 +36,8 @@ class WriteData:
 
     def write_photon_emission_profile(self, obs_param, emission_profiles, subdir=''):
         output_path = obs_param.getroot().find('head').find('id').text
-        h5_output_path = self.root_path + subdir + output_path + ".h5"
-        xml_output_path = self.root_path + subdir + output_path + ".xml"
+        h5_output_path = os.path.join(self.root_path, subdir, output_path + ".h5")
+        xml_output_path = os.path.join(self.root_path, subdir, output_path + ".xml")
         GetData.ensure_dir(h5_output_path)
         try:
             emission_profiles.to_hdf(path_or_buf=h5_output_path, key='emission_profiles')
