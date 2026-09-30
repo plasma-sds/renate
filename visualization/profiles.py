@@ -6,14 +6,13 @@ from atomic.atomic_db import AtomicDB
 
 
 class BeamletProfiles:
-    def __init__(self, beamlet=None, param_path='output/beamlet/beamlet_test.xml', key=['profiles']):
+    def __init__(self, beamlet=None, param_path='output/beamlet/beamlet_test.xml'):
         if beamlet is None:
             self.param_path = param_path
             self.param = utility.getdata.GetData(data_path_name=self.param_path).data
             self.access_path = self.param.getroot().find('body').find('beamlet_source').text
-            self.key = key
-            self.components = utility.getdata.GetData(data_path_name=self.access_path, data_key=self.key).data
-            self.profiles = utility.getdata.GetData(data_path_name=self.access_path, data_key=self.key).data
+            self.components = utility.getdata.GetData(data_path_name=self.access_path, data_key=['components']).data
+            self.profiles = utility.getdata.GetData(data_path_name=self.access_path, data_key=['profiles']).data
             self.atomic_db = AtomicDB(param=self.param, components=self.components)
             self.title = None
         else:
