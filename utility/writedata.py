@@ -6,7 +6,7 @@ from lxml import etree
 class WriteData:
     def __init__(self, root_path=None):
         if root_path is None:
-            root_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data") + os.sep
+            root_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "output") + os.sep
         self.root_path = root_path
 
     def write_beamlet_profiles(self, beamlet, subdir=''):
