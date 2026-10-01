@@ -79,6 +79,18 @@ class WriteDataTest(unittest.TestCase):
                          msg='subdir is expected to be composed under root_path '
                              'with os.path.join.')
 
+    def test_write_beamlet_profiles_appends_history(self):
+        self.writer.write_beamlet_profiles(self.beamlet)
+        history_element = self.beamlet.param.getroot().find('body').find('beamlet_history')
+        self.assertIsNotNone(history_element,
+                             msg='beamlet_history element is expected to be appended '
+                                 'to the XML on the first write.')
+        self.assertEqual(history_element.text, self.initial_source,
+                         msg='beamlet_history is expected to record the previous '
+                             'beamlet_source value.')
+        self.assertEqual(history_element.get('unit'), '-',
+                         msg="beamlet_history element is expected to have unit='-'.")
+
 
 if __name__ == '__main__':
     unittest.main()
