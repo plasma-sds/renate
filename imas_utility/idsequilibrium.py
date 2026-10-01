@@ -13,16 +13,16 @@ class EquilibriumIds(ImasObject):
     def load_equilibrium_ids(self):
         try:
             self.equilibrium = self.imas_pointer.get('equilibrium')
-        except:
+        except Exception as exc:
             raise IdsInstanceLoadError('Equilibrium IDS not found in shot ' + str(self.shot) +
-                                       ' at run ' + str(self.run))
+                                       ' at run ' + str(self.run)) from exc
 
     def get_time_index(self, time):
         try:
             time_array = self.equilibrium.time
-        except:
+        except Exception as exc:
             raise IdsAttributeLoadError('No time array available for the requested Shot: ' +
-                                        str(self.shot) + ' and Run: ' + str(self.run) + ' in equilibrium IDS.')
+                                        str(self.shot) + ' and Run: ' + str(self.run) + ' in equilibrium IDS.') from exc
 
         if (time_array[time_array.argmin()] <= time) and (time_array[time_array.argmax()] >= time):
             return (np.abs(time_array - time)).argmin()
@@ -36,26 +36,26 @@ class EquilibriumIds(ImasObject):
         try:
             return self.equilibrium.time_slice[time_index].profiles_2d[0].r, \
                    self.equilibrium.time_slice[time_index].profiles_2d[0].z
-        except:
+        except Exception as exc:
             raise IdsAttributeLoadError('There is no R,Z grid data in equilibrium IDS @ Shot: ' +
-                                        str(self.shot) + ' Run: ' + str(self.run) + ' in equilibrium IDS.')
+                                        str(self.shot) + ' Run: ' + str(self.run) + ' in equilibrium IDS.') from exc
 
     def get_2d_psi_values(self, time):
         time_index = self.get_time_index(time)
         try:
             return self.equilibrium.time_slice[time_index].profiles_2d[0].psi
-        except:
+        except Exception as exc:
             raise IdsAttributeLoadError('There is no Psi grid data in equilibrium IDS @ Shot: ' + str(self.shot) +
-                                        ' Run: ' + str(self.run) + ' in equilibrium IDS.')
+                                        ' Run: ' + str(self.run) + ' in equilibrium IDS.') from exc
 
     def get_lcfs_boundary(self, time):
         time_index = self.get_time_index(time)
         try:
             return self.equilibrium.time_slice[time_index].boundary.outline.r,\
                    self.equilibrium.time_slice[time_index].boundary.outline.z
-        except:
+        except Exception as exc:
             raise IdsAttributeLoadError('No RZ coordinates for LCFS are available for Shot: ' + str(self.shot) +
-                                        ' Run: ' + str(self.run) + ' in equilibrium IDS.')
+                                        ' Run: ' + str(self.run) + ' in equilibrium IDS.') from exc
 
     def get_normalized_2d_flux(self, time):
         r_grid, z_grid = self.get_2d_equilibrium_grid(time)
