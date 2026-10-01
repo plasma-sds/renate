@@ -47,6 +47,15 @@ class WriteDataTest(unittest.TestCase):
                          msg='Default root_path is expected to resolve relative to '
                              'utility/writedata.py (<module_dir>/../data/output).')
 
+    # ------------------------------------------------- write_beamlet_profiles
+
+    def test_write_beamlet_profiles_creates_files(self):
+        h5_full, xml_full = self.writer.write_beamlet_profiles(self.beamlet)
+        self.assertTrue(os.path.isfile(h5_full),
+                        msg='HDF5 output file is expected at: ' + h5_full)
+        self.assertTrue(os.path.isfile(xml_full),
+                        msg='XML output file is expected at: ' + xml_full)
+
 
 if __name__ == '__main__':
     unittest.main()
