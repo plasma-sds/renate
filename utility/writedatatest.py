@@ -110,6 +110,13 @@ class WriteDataTest(unittest.TestCase):
         self.assertTrue(components_rt.equals(expected_components),
                         msg='Components DataFrame is expected to round-trip through HDF5 unchanged.')
 
+    def test_write_beamlet_profiles_raises_on_bad_input(self):
+        self.beamlet.profiles = None  # triggers AttributeError inside the try block
+        with self.assertRaises(Exception,
+                               msg='write_beamlet_profiles is expected to re-raise '
+                                   'as Exception when the inner write fails.'):
+            self.writer.write_beamlet_profiles(self.beamlet)
+
 
 if __name__ == '__main__':
     unittest.main()
