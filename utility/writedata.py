@@ -35,8 +35,9 @@ class WriteData:
             beamlet.param.write(xml_full_path)
             print('Beamlet profile data written to file: ' + os.path.join(subdir, output_path))
             return h5_full_path, xml_full_path
-        except:
-            raise Exception('Beamlet profile data could NOT be written to file: ' + os.path.join(subdir, output_path))
+        except Exception as exc:
+            raise OSError('Beamlet profile data could NOT be written to file: '
+                          + os.path.join(subdir, output_path)) from exc
 
     def write_photon_emission_profile(self, obs_param, emission_profiles, subdir=''):
         output_path = obs_param.getroot().find('head').find('id').text
@@ -52,5 +53,6 @@ class WriteData:
                 obs_param.getroot().find('body').append(new_element)
             obs_param.write(xml_output_path)
             print('Photon emission profile data written to file: ' + output_path)
-        except:
-            raise Exception('Photon emission profile data could NOT be written to file: ' + output_path)
+        except Exception as exc:
+            raise OSError('Photon emission profile data could NOT be written to file: '
+                          + output_path) from exc
