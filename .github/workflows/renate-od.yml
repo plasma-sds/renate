@@ -27,6 +27,7 @@ jobs:
         python -m unittest -v atomic.atomic_dbtest.RenateDBTest
         python -m unittest -v atomic.neutral_dbtest.NeutralDBTest
         python -m unittest -v utility.accessdatatest.AccessDataTest
+        python -m unittest -v utility.converttest.ConvertTest
         python -m unittest -v utility.getdatatest.GetDataTest
         python -m unittest -v utility.putdatatest.PutDataTest
         python -m unittest -v utility.managetest.VersionTest
