@@ -33,6 +33,7 @@ jobs:
         python -m unittest -v utility.managetest.CodeInfoTest
         python -m unittest -v utility.inputtest.AtomicInputTest
         python -m unittest -v utility.inputtest.BeamletInputTest
+        python -m unittest -v utility.writedatatest.WriteDataTest
         python -m unittest -v observation.noisetest.NoiseGeneratorTest
         python -m unittest -v observation.noisetest.APDGeneratorTest
         python -m unittest -v observation.noisetest.PMTGeneratorTest
