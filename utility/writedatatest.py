@@ -56,6 +56,17 @@ class WriteDataTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(xml_full),
                         msg='XML output file is expected at: ' + xml_full)
 
+    def test_write_beamlet_profiles_returns_expected_paths(self):
+        h5_full, xml_full = self.writer.write_beamlet_profiles(self.beamlet)
+        self.assertEqual(h5_full,
+                         os.path.join(self.writer.root_path, self.output_id + '.h5'),
+                         msg='Returned HDF5 path is expected to equal '
+                             'os.path.join(root_path, <id>.h5).')
+        self.assertEqual(xml_full,
+                         os.path.join(self.writer.root_path, self.output_id + '.xml'),
+                         msg='Returned XML path is expected to equal '
+                             'os.path.join(root_path, <id>.xml).')
+
 
 if __name__ == '__main__':
     unittest.main()
