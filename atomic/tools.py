@@ -1,116 +1,97 @@
-from utility.constants import Constants
-from utility.exceptions import InputError
+from atomic.atomic_db import AtomicDB, RenateDB, InternalDB
 import numpy as np
 import h5py
-import scipy.constants as sc
+import os
 
 
-class RENATE_H_hdf_generator():
+class AtomicDB_to_HDF_Writer:
 
-    def __init__(self, beamenergy, temperature, atomic_dict):
-        self.beamenergy = beamenergy
-        self.T = temperature
-        self.atomic_dict = atomic_dict
-        self.max_level = 6
-        self.impur_list = [('He', 2, 4), ('Z', 3, 6), ('Be', 4, 9), ('B', 5, 11), ('C', 6, 12), ('Z', 7, 14), ('O', 8, 16),
-                           ('Z', 9, 18), ('Z', 10, 20), ('Z', 11, 22)]
-        self.einsteins = np.array([[0.0000e+00, 4.6986e+08, 5.5751e+07, 1.2785e+07, 4.1250e+06,
-                                    1.6440e+06],
-                                   [0.0000e+00, 0.0000e+00, 4.4101e+07, 8.4193e+06, 2.5304e+06,
-                                    9.7320e+05],
-                                   [0.0000e+00, 0.0000e+00, 0.0000e+00, 8.9860e+06, 2.2008e+06,
-                                    7.7829e+05],
-                                   [0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 2.6993e+06,
-                                    7.7110e+05],
-                                   [0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00,
-                                    1.0254e+06],
-                                   [0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00,
-                                    0.0000e+00]], dtype='float')
+    #   Usage:
+    #   writer = AtomicDB_to_HDF_Writer(AtomicDB_instance)
+    #   writer.write_to(output_directory_str_or_path)
 
-    def __build_rate_matrix(self, mx_type, projectile, target):
-        print(mx_type+' '+str(projectile)+'-->'+str(target))
-        if mx_type == 'collisional':
-            matrix = np.zeros((self.max_level, self.max_level, len(self.T)))
-            for i in range(len(self.T)):
-                matrix[:, :, i] = self.__get_rate_matrix(projectile, target, self.T[i])
-            return matrix
-        if mx_type == 'eloss':
-            matrix = np.zeros((self.max_level, len(self.T)))
-            for i in range(len(self.T)):
-                matrix[:, i] = self.__get_eloss_rate_matrix(projectile, target, self.T[i])
-            return matrix
+    def __init__(self, atomicdb:AtomicDB):
+        self.atomicdb = atomicdb
+        self.atomic_levels = list(atomicdb.atomic_dict.keys())
+        self.level_num = atomicdb.atomic_levels
+        self.einsteins = atomicdb.spontaneous_trans
+        self.temperature_axis = atomicdb.temperature_axis
+        self.impurities = atomicdb.components[atomicdb.components['q'] > 1]['q'].values
+        self.ions = atomicdb.components[atomicdb.components['q'] > 0]['q'].values
 
-    def __build_impurity_rate_matrix(self, mx_type, projectile):
+        self.excitation_interpolator_dict = {'electron': atomicdb.electron_impact_trans}
+        self.loss_interpolator_dict = {'electron': atomicdb.electron_impact_loss}
+
+        ion_impact_trans_array = np.array(atomicdb.ion_impact_trans)
+        ion_impact_loss_array = np.array(atomicdb.ion_impact_loss)
+
+        for i,ion in enumerate(self.ions):
+            self.excitation_interpolator_dict[ion] = ion_impact_trans_array[:,:,i]
+            self.loss_interpolator_dict[ion] = ion_impact_loss_array[:,i]
+
+        self.beam_energy_keV = float(atomicdb.param.xpath('//beamlet_energy/text()')[0])
+        if atomicdb.param.xpath('//beamlet_energy/@unit')[0] == 'keV':
+            pass
+        elif atomicdb.param.xpath('//beamlet_energy/@unit')[0] == 'eV':
+            self.beam_energy_keV /= 1000
+        else:
+            print('Unknown beam energy unit in AtomicDB.param!')
+
+        if isinstance(atomicdb.provider, RenateDB):
+            self.beam_type = atomicdb.provider.species
+        elif isinstance(atomicdb.provider, InternalDB):
+            self.beam_type = atomicdb.provider.projectile
+        else:
+            print('Unkown atomic data AtomicDB.provider!')
+
+        self.electron_excitation = self.__build_rate_matrix('excitation', 'electron')
+        self.ion_excitation = self.__build_ion_rate_matrix('excitation')
+
+        self.electron_impact_loss = self.__build_rate_matrix('loss', 'electron')
+        self.ion_impact_loss = self.__build_ion_rate_matrix('loss')
+        self.all_loss = np.vstack((np.expand_dims(self.electron_impact_loss, 0), self.ion_impact_loss))
+
+    def convert_to_cm2(self, a):
+        return a * 1e4
+
+    def __build_rate_matrix(self, mx_type, target):
+        print(mx_type+' '+str(self.beam_type)+'-->'+str(target))
+        if mx_type == 'excitation':
+            matrix = np.zeros((self.level_num, self.level_num, len(self.temperature_axis)), dtype=float)
+            for i in range(self.level_num):
+                for j in range(self.level_num):
+                    matrix[i,j,:] = self.excitation_interpolator_dict[target][i][j](self.temperature_axis)
+            return self.convert_to_cm2(matrix)
+        if mx_type == 'loss':
+            matrix = np.zeros((self.level_num, len(self.temperature_axis)), dtype = float)
+            for i in range(self.level_num):
+                matrix[i,:] = self.loss_interpolator_dict[target][i](self.temperature_axis)
+            return self.convert_to_cm2(matrix)
+
+    def __build_ion_rate_matrix(self, mx_type):
         matrix = []
-        for impurity in self.impur_list:
-            target = Ion(label=impurity[0], mass_number=impurity[2], atomic_number=impurity[1], charge=impurity[1])
-            matrix.append(self.__build_rate_matrix(mx_type, projectile, target))
+        for ion in self.ions:
+            matrix.append(self.__build_rate_matrix(mx_type, ion))
         return np.array(matrix)
 
-    def __get_rate_matrix(self, projectile, target, t):
-        E_range = self.__get_energy_range(t, target.mass, projectile.mass)
-        rate_matrix = np.zeros((self.max_level, self.max_level), dtype='float')
-        levels = np.arange(self.max_level)
-        for i in levels:
-            for j in levels:
-                if i != j:
-                    if j > i:
-                        transtype = 'ex'
-                    else:
-                        transtype = 'de-ex'
-                    trans = Transition(projectile=projectile, target=target,
-                                       from_level=str(i+1), to_level=str(j+1), trans=transtype)
-                    crossec = cross_section.CrossSection(transition=trans, impact_energy=E_range, atomic_dict=self.atomic_dict)
-                    rate = cross_section.RateCoeff(transition=trans, crossection=crossec)
-                    rate_matrix[i, j] = rate.generate_rate(temperature=t, beamenergy=self.beamenergy)
-        return rate_matrix
+    def write_to(self, output_directory):
+        filename = f'rate_coeffs_{int(self.beam_energy_keV)}_{self.beam_type}.h5'
+        self.path = os.path.join(output_directory, filename)
+        rate_data = h5py.File(self.path, "w")
 
-    def __get_eloss_rate_matrix(self, projectile, target, t):
-        E_range = self.__get_energy_range(t, target.mass, projectile.mass)
-        rate_matrix = np.zeros((self.max_level), dtype='float')
-        levels = np.arange(self.max_level)
-        for i in levels:
-            trans = Transition(projectile=projectile, target=target,
-                               from_level=str(i+1), to_level='eloss', trans='eloss')
-            crossec = cross_section.CrossSection(transition=trans, impact_energy=E_range, atomic_dict=self.atomic_dict)
-            rate = cross_section.RateCoeff(transition=trans, crossection=crossec)
-            rate_matrix[i] = rate.generate_rate(temperature=t, beamenergy=self.beamenergy)
-        return rate_matrix
-
-    def __get_energy_range(self, t, m_t, m_b, minE=13.6, N=1000, k=3):
-        w = np.sqrt(2*t*sc.eV/m_t)
-        vb = np.sqrt(2*self.beamenergy*sc.eV/m_b)
-        v_min = max(vb-k*w, 0)
-        v_max = vb+k*w
-        roi_start = max(0.5*m_t*v_min**2/sc.eV, minE)
-        roi_max = 0.5*m_t*v_max**2/sc.eV
-        E_range = np.linspace(roi_start, roi_max, N)
-        return E_range
-
-    def write_hdf(self, path='rate_coeffs_'):
-        H = Atom(label='H', mass_number=1, atomic_number=1)
-        el = Particle('e', charge=-1)
-        prot = Ion(label='1H1+', mass_number=1, atomic_number=1, charge=1)
-
-        self.filename = path+str(int(self.beamenergy/1000))+'_H.h5'
-        rate_data = h5py.File(self.filename, "w")
-        rate_data.create_dataset('Beam energy', (), dtype='<i2', data=self.beamenergy)
-        self.atomic_levels = rate_data.create_dataset('Atomic Levels', dtype='|S3', data=[b'1l', b'2l', b'3l', b'4l', b'5l', b'6l'])
-        self.beam_type = rate_data.create_dataset('Beam type', dtype='|S2', data=b'H')
+        rate_data.create_dataset('Beam energy', (), dtype='<i2', data=self.beam_energy_keV)
+        rate_data.create_dataset('Atomic Levels', dtype='|S3', data=self.atomic_levels)
+        rate_data.create_dataset('Beam type', dtype='|S2', data=self.beam_type)
         rate_data.create_dataset('Einstein Coeffs', dtype='<f4', data=self.einsteins)
-        rate_data.create_dataset('Temperature axis', dtype='<f8', data=self.T)
-        self.impurity_collisions = rate_data.create_dataset('Impurity Collisions', dtype='<i2', data=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-        self.impur_neutral = self.__build_impurity_rate_matrix('collisional', H)
-        rate_data.create_dataset('Collisional Coeffs/Impurity Neutral Collisions', dtype='<f8', data=self.impur_neutral)
-        self.electron_neutral = self.__build_rate_matrix('collisional', H, el)
-        rate_data.create_dataset('Collisional Coeffs/Electron Neutral Collisions', dtype='<f8', data=self.electron_neutral)
-        self.proton_neutral = self.__build_rate_matrix('collisional', H, prot)
-        rate_data.create_dataset('Collisional Coeffs/Proton Neutral Collisions', dtype='<f8', data=self.proton_neutral)
-        eloss = np.zeros((12, 6, 400), dtype='float')
-        eloss[0, :, :] = self.__build_rate_matrix('eloss', H, el)
-        eloss[1, :, :] = self.__build_rate_matrix('eloss', H, prot)
-        eloss[2:, :, :] = self.__build_impurity_rate_matrix('eloss', H)
-        self.eloss = eloss
-        rate_data.create_dataset('Collisional Coeffs/Electron Loss Collisions', dtype='<f8', data=self.eloss)
+        rate_data.create_dataset('Temperature axis', dtype='<f8', data=self.temperature_axis)
+        rate_data.create_dataset('Impurity Collisions', dtype='<i2', data=list(self.impurities))
+
+        rate_data.create_dataset('Collisional Coeffs/Electron Neutral Collisions', dtype='<f8', data=self.electron_excitation)
+        rate_data.create_dataset('Collisional Coeffs/Proton Neutral Collisions', dtype='<f8', data=self.ion_excitation[0])
+        rate_data.create_dataset('Collisional Coeffs/Impurity Neutral Collisions', dtype='<f8', data=self.ion_excitation[1:])
+
+        rate_data.create_dataset('Collisional Coeffs/Electron Loss Collisions', dtype='<f8', data=self.all_loss)
         rate_data.close()
-        return self.filename
+
+        print(f'File written to {self.path}')
+        
