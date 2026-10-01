@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import pandas
 
 from utility import writedata as writedata_module
 from utility.writedata import WriteData
@@ -97,6 +98,17 @@ class WriteDataTest(unittest.TestCase):
         self.assertEqual(source, self.output_id + '.h5',
                          msg='beamlet_source is expected to be set to the new '
                              'relative HDF5 filename after writing.')
+
+    def test_write_beamlet_profiles_data_roundtrip(self):
+        expected_profiles = self.beamlet.profiles.copy()
+        expected_components = self.beamlet.components.copy()
+        h5_full, _ = self.writer.write_beamlet_profiles(self.beamlet)
+        profiles_rt = pandas.read_hdf(h5_full, key='profiles')
+        components_rt = pandas.read_hdf(h5_full, key='components')
+        self.assertTrue(profiles_rt.equals(expected_profiles),
+                        msg='Profiles DataFrame is expected to round-trip through HDF5 unchanged.')
+        self.assertTrue(components_rt.equals(expected_components),
+                        msg='Components DataFrame is expected to round-trip through HDF5 unchanged.')
 
 
 if __name__ == '__main__':
