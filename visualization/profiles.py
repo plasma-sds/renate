@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot
 import utility
 from matplotlib.backends.backend_pdf import PdfPages
@@ -10,7 +11,11 @@ class BeamletProfiles:
         if beamlet is None:
             self.param_path = param_path
             self.param = utility.getdata.GetData(data_path_name=self.param_path).data
-            self.access_path = self.param.getroot().find('body').find('beamlet_source').text
+            # <beamlet_source> stores the HDF5 filename relative to the XML file
+            # (see WriteData.write_beamlet_profiles). Rebuild the full path by
+            # stripping the <xml_filename>.xml from param_path and joining with it.
+            self.access_path = os.path.join(os.path.dirname(self.param_path),
+                                            self.param.getroot().find('body').find('beamlet_source').text)
             self.components = utility.getdata.GetData(data_path_name=self.access_path, data_key=['components']).data
             self.profiles = utility.getdata.GetData(data_path_name=self.access_path, data_key=['profiles']).data
             self.atomic_db = AtomicDB(param=self.param, components=self.components)
