@@ -11,5 +11,5 @@ class NbiIds(ImasObject):
     def load_nbi_ids(self):
         try:
             self.nbi = self.imas_pointer.get('nbi')
-        except:
-            raise IdsInstanceLoadError('No nbi IDS found in shot ' + str(self.shot) + ' at run ' + str(self.run))
+        except Exception as exc:
+            raise IdsInstanceLoadError('No nbi IDS found in shot ' + str(self.shot) + ' at run ' + str(self.run)) from exc
