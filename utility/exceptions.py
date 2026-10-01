@@ -1,22 +1,32 @@
-class IdsLoadError(Exception):
+class IdsError(Exception):
+    """Base class for all IDS-related errors."""
     pass
 
 
-class IdsAttributeLoadError(Exception):
+class IdsLoadError(IdsError):
     pass
 
 
-class IdsInstanceLoadError(Exception):
+class IdsAttributeLoadError(IdsError):
     pass
 
 
-class RenateAuthorizedUserError(Exception):
+class IdsInstanceLoadError(IdsError):
     pass
 
 
-class RenateNotValidTransitionError(Exception):
+class RenateError(Exception):
+    """Base class for all RENATE-specific errors."""
     pass
 
-  
+
+class RenateAuthorizedUserError(RenateError):
+    pass
+
+
+class RenateNotValidTransitionError(RenateError):
+    pass
+
+
 class InputError(Exception):
     pass
