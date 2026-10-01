@@ -3,6 +3,7 @@ import shutil
 import tempfile
 import unittest
 
+from utility import writedata as writedata_module
 from utility.writedata import WriteData
 from crm_solver.beamlet import Beamlet
 
@@ -33,6 +34,18 @@ class WriteDataTest(unittest.TestCase):
             shutil.rmtree(self.tmp_root, ignore_errors=True)
         del self.writer
         del self.beamlet
+
+    # ------------------------------------------------------------------ init
+
+    def test_default_root_path_is_relative_to_module(self):
+        default_writer = WriteData()
+        expected = os.path.normpath(os.path.join(
+            os.path.dirname(os.path.abspath(writedata_module.__file__)),
+            '..', 'data', 'output'))
+        self.assertEqual(os.path.normpath(default_writer.root_path.rstrip(os.sep)),
+                         expected,
+                         msg='Default root_path is expected to resolve relative to '
+                             'utility/writedata.py (<module_dir>/../data/output).')
 
 
 if __name__ == '__main__':
