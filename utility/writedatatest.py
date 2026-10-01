@@ -67,6 +67,18 @@ class WriteDataTest(unittest.TestCase):
                          msg='Returned XML path is expected to equal '
                              'os.path.join(root_path, <id>.xml).')
 
+    def test_write_beamlet_profiles_uses_subdir(self):
+        h5_full, xml_full = self.writer.write_beamlet_profiles(self.beamlet, subdir=self.SUBDIR)
+        expected_dir = os.path.join(self.writer.root_path.rstrip(os.sep), self.SUBDIR)
+        self.assertTrue(os.path.isfile(h5_full),
+                        msg='HDF5 file in subdir is expected at: ' + h5_full)
+        self.assertTrue(os.path.isfile(xml_full),
+                        msg='XML file in subdir is expected at: ' + xml_full)
+        self.assertEqual(os.path.normpath(os.path.dirname(h5_full)),
+                         os.path.normpath(expected_dir),
+                         msg='subdir is expected to be composed under root_path '
+                             'with os.path.join.')
+
 
 if __name__ == '__main__':
     unittest.main()
