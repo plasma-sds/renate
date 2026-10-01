@@ -1,47 +1,32 @@
-class IdsLoadError(Exception):
-    def __init__(self, *args, **kwargs):
-        pass
-
-    @staticmethod
-    def __new__(*args, **kwargs):
-        """ Create and return a new object.  See help(type) for accurate signature. """
-        pass
-
-
-class IdsAttributeLoadError(Exception):
-    def __init__(self, *args, **kwargs):
-        pass
-
-    @staticmethod
-    def __new__(*args, **kwargs):
-        """ Create and return a new object.  See help(type) for accurate signature. """
-        pass
-
-
-class IdsInstanceLoadError(Exception):
-    def __init__(self, *args, **kwargs):
-        pass
-
-    @staticmethod
-    def __new__(*args, **kwargs):
-        """ Create and return a new object.  See help(type) for accurate signature. """
-        pass
-
-
-class RenateAuthorizedUserError(Exception):
-    def __init__(self, *args, **kwargs):
-        pass
-
-    @staticmethod
-    def __new__(*args, **kwargs):
-        """ Create and return a new object.  See help(type) for accurate signature. """
-        pass
-
-
-class RenateNotValidTransitionError(Exception):
+class IdsError(Exception):
+    """Base class for all IDS-related errors."""
     pass
 
-  
+
+class IdsLoadError(IdsError):
+    pass
+
+
+class IdsAttributeLoadError(IdsError):
+    pass
+
+
+class IdsInstanceLoadError(IdsError):
+    pass
+
+
+class RenateError(Exception):
+    """Base class for all RENATE-specific errors."""
+    pass
+
+
+class RenateAuthorizedUserError(RenateError):
+    pass
+
+
+class RenateNotValidTransitionError(RenateError):
+    pass
+
+
 class InputError(Exception):
-    def __init__(self, message):
-        self.message = message
+    pass
