@@ -39,9 +39,10 @@ class PutData(AccessData):
                         self.sftp.put(self.user_local_data_path, self.server_public_write_access_path)
                         print('Successfully placed: ' + self.user_local_data_path + ' to public server location: '
                               + self.server_public_write_access_path)
-                    except:
+                    except Exception as exc:
                         print('Could not put file: ' + self.user_local_data_path + ' to public server location: '
-                              + self.server_public_write_access_path)
+                              + self.server_public_write_access_path + ' (' + repr(exc) + ')')
+                        raise
                     finally:
                         self.disconnect()
             elif server_type == 'private':
@@ -59,9 +60,10 @@ class PutData(AccessData):
                         self.sftp.put(self.user_local_data_path, self.server_private_path)
                         print('Successfully placed: ' + self.user_local_data_path + ' to public server location: '
                               + self.server_private_path)
-                    except:
+                    except Exception as exc:
                         print('Could not put file: ' + self.user_local_data_path + ' to private server location: '
-                              + self.server_private_path)
+                              + self.server_private_path + ' (' + repr(exc) + ')')
+                        raise
                     finally:
                         self.disconnect()
             else:
