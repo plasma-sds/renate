@@ -1,5 +1,6 @@
 import utility
 from utility.constants import Constants
+from utility.exceptions import RenateNotValidTransitionError
 import pandas
 import numpy
 from copy import deepcopy
@@ -86,8 +87,10 @@ class Beamlet:
             from_level, to_level, ground_level, transition_label = self.atomic_db.set_default_atomic_levels()
         if isinstance(to_level, str) and isinstance(from_level, str):
             if self.atomic_db.atomic_dict[to_level] >= self.atomic_db.atomic_dict[from_level]:
-                raise Exception('Dude! Please stop screwing around. '
-                                'Electrons spontaneously transit from higher to lower atomic states.')
+                raise RenateNotValidTransitionError(
+                    'Electrons spontaneously transit from higher to lower atomic states. '
+                    'The requested transition from level ' + from_level + ' to level ' + to_level +
+                    ' is not valid.')
         else:
             raise Exception('The expected input for atomic transitions are strings. '
                             'Bundled-n for H,D,T beam species ex:[1, 2, ... 6]. '
