@@ -1,4 +1,5 @@
 from utility.particle import Particle
+from utility.exceptions import InputError
 
 
 class Transition(object):
@@ -10,14 +11,14 @@ class Transition(object):
             if trans in ['ex', 'de-ex', 'eloss', 'ion', 'cx']:
                 self.name = trans
             else:
-                InputError('The provided transition is not supported. '
-                           'Supported transitions are: ex, de-ex, eloss, ion and cx.')
+                raise InputError('The provided transition is not supported. '
+                                 'Supported transitions are: ex, de-ex, eloss, ion and cx.')
             if (to_level is None) or isinstance(to_level, str):
                 self.to_level = to_level
             else:
-                InputError('The provided end state for the electron transition is not valid. Str or None is expected.')
+                raise InputError('The provided end state for the electron transition is not valid. Str or None is expected.')
         else:
-            InputError('Expected input data format for <from_level>, <to_level> and <trans> to be of str type.')
+            raise InputError('Expected input data format for <from_level>, <to_level> and <trans> to be of str type.')
 
     def __str__(self):
         if self.name in ['cx', 'eloss', 'ion']:
