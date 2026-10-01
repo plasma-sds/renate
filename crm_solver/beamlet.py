@@ -92,7 +92,7 @@ class Beamlet:
                     'The requested transition from level ' + from_level + ' to level ' + to_level +
                     ' is not valid.')
         else:
-            raise Exception('The expected input for atomic transitions are strings. '
+            raise TypeError('The expected input for atomic transitions are strings. '
                             'Bundled-n for H,D,T beam species ex:[1, 2, ... 6]. '
                             'l-n resolved labels for Li ex: [2s, 2p, ... 4f] and Na ex: [3s, 3p, ... 5s]')
         if self.__was_beamevolution_performed():
