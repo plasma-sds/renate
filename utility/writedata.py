@@ -1,12 +1,16 @@
 import os
-from utility.getdata import GetData
+from utility.getdata import GetData, AccessData
 from lxml import etree
+from utility.accessdata import DEFAULT_SETUP, FALLBACK_SETUP
+
+OUTPUT_SUBDIR = 'output'
 
 
 class WriteData:
     def __init__(self, root_path=None):
         if root_path is None:
-            root_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "output") + os.sep
+            access_data = AccessData(DEFAULT_SETUP)
+            root_path = os.path.join(access_data.user_local_data_directory, OUTPUT_SUBDIR) + os.sep
         self.root_path = root_path
 
     def write_beamlet_profiles(self, beamlet, subdir=''):
