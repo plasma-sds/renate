@@ -91,6 +91,13 @@ class WriteDataTest(unittest.TestCase):
         self.assertEqual(history_element.get('unit'), '-',
                          msg="beamlet_history element is expected to have unit='-'.")
 
+    def test_write_beamlet_profiles_updates_beamlet_source(self):
+        self.writer.write_beamlet_profiles(self.beamlet)
+        source = self.beamlet.param.getroot().find('body').find('beamlet_source').text
+        self.assertEqual(source, self.output_id + '.h5',
+                         msg='beamlet_source is expected to be set to the new '
+                             'relative HDF5 filename after writing.')
+
 
 if __name__ == '__main__':
     unittest.main()
