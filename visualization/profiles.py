@@ -82,9 +82,9 @@ class BeamletProfiles:
         try:
             axis.plot(self.profiles['beamlet grid'], self.profiles[transition],
                       label='Emission for '+transition, color='r')
-        except KeyError:
-            raise Exception('The requested transition: <'+transition+'> is not in the stored data. '
-                            'Try computing it first or please make sure it exists')
+        except KeyError as exc:
+            raise KeyError('The requested transition: <'+transition+'> is not in the stored data. '
+                           'Try computing it first or please make sure it exists') from exc
         axis.set_ylabel('Linear emission density [ph/sm]')
         axis.yaxis.label.set_color('r')
         axis.legend(loc='upper right')
