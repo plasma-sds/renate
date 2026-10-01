@@ -54,9 +54,9 @@ class RenateDB:
         mass_str = getdata.GetData(data_path_name=data_path_name, data_format="array").data
         try:
             self.mass = float(mass_str)
-        except ValueError:
-            print('Unexpected data in file: ' + data_path_name + '(Expecting single float!)')
-            raise ValueError
+        except ValueError as exc:
+            raise ValueError('Unexpected data in file: ' + data_path_name +
+                             ' (Expecting single float!)') from exc
 
     def _get_projectile_velocity(self):
         self.velocity = uc.calculate_velocity_from_energy(uc.convert_keV_to_eV(float(self.energy)), self.mass)
@@ -65,7 +65,7 @@ class RenateDB:
     def __set_atomic_dictionary(self):
         assert isinstance(self.species, str)
         if self.species not in ['H', 'D', 'T', 'Li', 'Na', 'dummy']:
-            raise Exception(self.species + ' beam atomic data not supported')
+            raise ValueError(self.species + ' beam atomic data not supported')
         if self.species in ['H', 'D', 'T']:
             self.atomic_dict = {'1n': 0, '2n': 1, '3n': 2, '4n': 3, '5n': 4, '6n': 5}
             self.atomic_levels = 6
@@ -216,7 +216,7 @@ class AtomicDB():
         '''''
         self.spontaneous_trans = self.provider.spontaneous_trans
         if self.atomic_levels != int(self.spontaneous_trans.size ** 0.5):
-            raise Exception('Loaded atomic database is inconsistent with atomic data dictionary. Wrong data loaded.')
+            raise RuntimeError('Loaded atomic database is inconsistent with atomic data dictionary. Wrong data loaded.')
 
     def __set_impact_loss_functions(self):
         '''''

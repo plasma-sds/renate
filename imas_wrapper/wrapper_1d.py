@@ -1,5 +1,6 @@
 from lxml import etree
 from utility.getdata import GetData
+from utility.exceptions import InputError
 from crm_solver.beamlet import Beamlet
 from imas_utility.idsprofiles import ProfilesIds
 from imas_utility.idsequilibrium import EquilibriumIds
@@ -44,7 +45,7 @@ class BeamletFromIds:
             beamlet_energy.text = str(energy)
         else:
             print('Further data exploitation development is in process. Currently beam energy to be added manually')
-            raise Exception('Missing beam energy input.')
+            raise InputError('Missing beam energy input.')
 
     def get_beamlet_current(self, current=None):
         if (current is not None) and (isinstance(current, float)):
@@ -52,7 +53,7 @@ class BeamletFromIds:
             beamlet_current.text = str(current)
         else:
             print('Further data exploitation development is in process. Currently beam current to be added manually')
-            raise Exception('Missisng beam current input.')
+            raise InputError('Missing beam current input.')
 
     def get_beamlet_species(self, species=None):
         if (species is not None) and (isinstance(species, str)):
@@ -60,7 +61,7 @@ class BeamletFromIds:
             beamlet_species.text = str(species)
         else:
             print('Further data exploitation development is in process. Currently beam species to be added manually')
-            raise Exception('Missisng beam species input.')
+            raise InputError('Missing beam species input.')
 
     def get_beamlet_ends(self):
         start = [float(self.param.getroot().find('body').find('beamlet_start').find('x').text),
@@ -75,15 +76,17 @@ class BeamletFromIds:
         if self.profile_source == 'core_profiles':
             self.run_prof = ProfilesIds(self.shotnumber, self.runnumber, self.profile_source)
         else:
-            print('There is no input protocol for data stored in ' + self.profile_source + ' IDS')
-            raise Exception('The requested IDS does not exist or data fetch for it is not implemented')
+            raise NotImplementedError('There is no input protocol for data stored in ' +
+                                      self.profile_source + ' IDS. '
+                                      'The requested IDS does not exist or data fetch for it is not implemented.')
 
     def load_imas_equilibrium(self):
         if self.equilibrium_source == 'equilibrium':
             self.equilibrium = EquilibriumIds(self.shotnumber, self.runnumber)
         else:
-            print('There is no input protocol for data stored in ' + self.equilibrium_source + ' IDS')
-            raise Exception('The requested IDS does not exist or data fetch for it is not implemented')
+            raise NotImplementedError('There is no input protocol for data stored in ' +
+                                      self.equilibrium_source + ' IDS. '
+                                      'The requested IDS does not exist or data fetch for it is not implemented.')
 
     def beamlet_profile_configuration(self):
         ids_density = self.run_prof.get_electron_density(self.timeslice)

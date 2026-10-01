@@ -72,7 +72,7 @@ class Beamlet:
             print('Beam evolution not calculated.')
             return
         else:
-            raise Exception('The numerical solver: ' + solver + ' is not supported. '
+            raise ValueError('The numerical solver: ' + solver + ' is not supported. '
                             'Supported solvers are: numerical, analytical, disregard.')
 
     def __was_beamevolution_performed(self):
