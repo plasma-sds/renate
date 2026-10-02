@@ -24,6 +24,7 @@ jobs:
         python -m unittest -v crm_solver.beamlettest.BeamletTest
         python -m unittest -v crm_solver.coefficientmatrixtest.CoefficientMatrixTest
         python -m unittest -v atomic.atomic_dbtest.AtomicDBTest
+        python -m unittest -v atomic.toolstest.AtomicDB_to_HDF_WriterTest
         python -m unittest -v atomic.atomic_dbtest.RenateDBTest
         python -m unittest -v atomic.neutral_dbtest.NeutralDBTest
         python -m unittest -v utility.accessdatatest.AccessDataTest
