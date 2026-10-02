@@ -27,6 +27,8 @@ def convert_beamlet_profiles(data_path_name='data/beamlet/test_profiles.h5'):
 def convert_from_cm2_to_m2(cross_section):
         return cross_section / 1.e4
 
+def convert_from_m2_to_cm2(cross_section):
+        return cross_section * 1.e4
 
 def convert_from_cm_to_m(length):
         return length / 1.e2

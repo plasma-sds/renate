@@ -1,4 +1,5 @@
 from atomic.atomic_db import AtomicDB, RenateDB, InternalDB
+from utility.convert import convert_from_m2_to_cm2
 import numpy as np
 import h5py
 import os
@@ -51,9 +52,6 @@ class AtomicDB_to_HDF_Writer:
         self.ion_impact_loss = self.__build_ion_rate_matrix('loss')
         self.all_loss = np.vstack((np.expand_dims(self.electron_impact_loss, 0), self.ion_impact_loss))
 
-    def convert_to_cm2(self, a):
-        return a * 1e4
-
     def __build_rate_matrix(self, mx_type, target):
         print(mx_type+' '+str(self.beam_type)+'-->'+str(target))
         if mx_type == 'excitation':
@@ -61,12 +59,12 @@ class AtomicDB_to_HDF_Writer:
             for i in range(self.level_num):
                 for j in range(self.level_num):
                     matrix[i,j,:] = self.excitation_interpolator_dict[target][i][j](self.temperature_axis)
-            return self.convert_to_cm2(matrix)
+            return convert_from_m2_to_cm2(matrix)
         if mx_type == 'loss':
             matrix = np.zeros((self.level_num, len(self.temperature_axis)), dtype = float)
             for i in range(self.level_num):
                 matrix[i,:] = self.loss_interpolator_dict[target][i](self.temperature_axis)
-            return self.convert_to_cm2(matrix)
+            return convert_from_m2_to_cm2(matrix)
 
     def __build_ion_rate_matrix(self, mx_type):
         matrix = []

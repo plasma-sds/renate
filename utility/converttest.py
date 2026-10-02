@@ -19,6 +19,16 @@ class ConvertTest(unittest.TestCase):
                                       err_msg='Array cross-section conversion is expected to scale every '
                                               'element by 1e-4.')
 
+    def test_convert_from_m2_to_cm2_scalar(self):
+        self.assertAlmostEqual(uc.convert_from_m2_to_cm2(1.0), 1.0e4,
+                               msg='1 m2 is expected to convert to 1e4 cm2.')
+
+    def test_convert_from_m2_to_cm2_array(self):
+        actual = uc.convert_from_m2_to_cm2(numpy.asarray([1.0, 2.0, 4.0]))
+        numpy.testing.assert_allclose(actual, numpy.asarray([1.0e4, 2.0e4, 4.0e4]),
+                                      err_msg='Array cross-section conversion is expected to scale every '
+                                              'element by 1e4.')
+
     def test_convert_from_cm_to_m_scalar(self):
         self.assertAlmostEqual(uc.convert_from_cm_to_m(1.0), 1.0e-2,
                                msg='1 cm is expected to convert to 1e-2 m.')
