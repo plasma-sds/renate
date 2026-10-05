@@ -1,10 +1,10 @@
-scipy==1.11.4        # wheels 3.9–3.12
-numpy==1.26.4        # last 1.x, wheels 3.9–3.12
-pandas==1.5.3        # stays on 1.x; wheels 3.8–3.11
-h5py==3.11.0         # wheels 3.8–3.12
-matplotlib==3.8.4    # wheels 3.9–3.12
-lxml==5.3.0          # wheels 3.6–3.13
-tables==3.9.2        # wheels 3.9–3.12
+scipy==1.11.4
+numpy==1.26.4
+pandas==1.5.3
+h5py==3.11.0
+matplotlib==3.8.4
+lxml==5.3.0
+tables==3.9.2
 paramiko==5.0.0
 scp==0.14.4
 pycollisiondb==0.1.3
