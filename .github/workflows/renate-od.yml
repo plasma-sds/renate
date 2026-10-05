@@ -5,17 +5,19 @@ on:
 
 jobs:
   build:
+
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.11']
+        python-version: ['3.9.12', '3.11.17']
+
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.9 and 3.11
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
-        ${{ matrix.python-version }}
+        python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
