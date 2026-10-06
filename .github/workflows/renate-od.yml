@@ -39,6 +39,7 @@ jobs:
             utility.converttest.ConvertTest \
             utility.getdatatest.GetDataTest \
             utility.putdatatest.PutDataTest \
+            utility.particletest.ParticleTest \
             utility.managetest.VersionTest \
             utility.managetest.CodeInfoTest \
             utility.inputtest.AtomicInputTest \
