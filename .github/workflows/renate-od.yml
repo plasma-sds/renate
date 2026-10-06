@@ -5,42 +5,53 @@ on:
 
 jobs:
   build:
+
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9.12', '3.11.17']
+
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.9.12
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
-        python-version: '3.9.12'
+        python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Run tests
       run: |
-        python -m unittest -v crm_solver.odetest.OdeTest
-        python -m unittest -v crm_solver.crmsystemtest.CrmRegressionTest
-        python -m unittest -v crm_solver.crmsystemtest.CrmAcceptanceTest
-        python -m unittest -v crm_solver.beamlettest.BeamletTest
-        python -m unittest -v crm_solver.coefficientmatrixtest.CoefficientMatrixTest
-        python -m unittest -v atomic.atomic_dbtest.AtomicDBTest
-        python -m unittest -v atomic.toolstest.AtomicDB_to_HDF_WriterTest
-        python -m unittest -v atomic.atomic_dbtest.RenateDBTest
-        python -m unittest -v atomic.neutral_dbtest.NeutralDBTest
-        python -m unittest -v utility.accessdatatest.AccessDataTest
-        python -m unittest -v utility.converttest.ConvertTest
-        python -m unittest -v utility.getdatatest.GetDataTest
-        python -m unittest -v utility.putdatatest.PutDataTest
-        python -m unittest -v utility.managetest.VersionTest
-        python -m unittest -v utility.managetest.CodeInfoTest
-        python -m unittest -v utility.inputtest.AtomicInputTest
-        python -m unittest -v utility.inputtest.BeamletInputTest
-        python -m unittest -v utility.writedatatest.WriteDataTest
-        python -m unittest -v observation.noisetest.NoiseGeneratorTest
-        python -m unittest -v observation.noisetest.APDGeneratorTest
-        python -m unittest -v observation.noisetest.PMTGeneratorTest
-        python -m unittest -v observation.noisetest.PPDGeneratorTest
-        python -m unittest -v observation.noisetest.MPPCGeneratorTest
-        python -m unittest -v observation.noisetest.DetectorGeneratorTest
-        python -m unittest -v observation.noisetest.NoiseRegressionTest
+        status=0
+        for t in \
+            crm_solver.odetest.OdeTest \
+            crm_solver.crmsystemtest.CrmRegressionTest \
+            crm_solver.crmsystemtest.CrmAcceptanceTest \
+            crm_solver.beamlettest.BeamletTest \
+            crm_solver.coefficientmatrixtest.CoefficientMatrixTest \
+            atomic.atomic_dbtest.AtomicDBTest \
+            atomic.toolstest.AtomicDB_to_HDF_WriterTest \
+            atomic.atomic_dbtest.RenateDBTest \
+            atomic.neutral_dbtest.NeutralDBTest \
+            utility.accessdatatest.AccessDataTest \
+            utility.converttest.ConvertTest \
+            utility.getdatatest.GetDataTest \
+            utility.putdatatest.PutDataTest \
+            utility.managetest.VersionTest \
+            utility.managetest.CodeInfoTest \
+            utility.inputtest.AtomicInputTest \
+            utility.inputtest.BeamletInputTest \
+            utility.writedatatest.WriteDataTest \
+            observation.noisetest.NoiseGeneratorTest \
+            observation.noisetest.APDGeneratorTest \
+            observation.noisetest.PMTGeneratorTest \
+            observation.noisetest.PPDGeneratorTest \
+            observation.noisetest.MPPCGeneratorTest \
+            observation.noisetest.DetectorGeneratorTest \
+            observation.noisetest.NoiseRegressionTest; do
+          python -m unittest -v "$t" || status=1
+        done
+        exit $status
 
