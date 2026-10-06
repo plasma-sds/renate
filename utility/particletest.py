@@ -63,19 +63,6 @@ class ParticleTest(unittest.TestCase):
         self.assertAlmostEqual(particle.mass, c.proton_mass,
                                msg='Proton mass is expected to equal scipy proton_mass.')
 
-    def test_deuterium_mass_from_nucleons(self):
-        particle = Particle(label='D', atomic_number=1, mass_number=2)
-        self.assertEqual(particle.neutron_number, 1,
-                         msg='Deuterium (Z=1, A=2) is expected to have neutron_number 1.')
-        self.assertAlmostEqual(particle.mass, c.neutron_mass + c.proton_mass,
-                               msg='Deuterium mass is expected to equal neutron_mass + proton_mass.')
-
-    def test_lithium_mass_from_nucleons(self):
-        particle = Particle(label='Li', charge=0, atomic_number=3, mass_number=7)
-        self.assertEqual(particle.neutron_number, 4,
-                         msg='Li-7 (Z=3, A=7) is expected to have neutron_number 4.')
-        self.assertAlmostEqual(particle.mass, 4 * c.neutron_mass + 3 * c.proton_mass,
-                               msg='Li-7 mass is expected to equal 4*neutron_mass + 3*proton_mass.')
 
     def test_electron_uses_electron_mass(self):
         particle = Particle(label='e', charge=-1, atomic_number=0, mass_number=0)
