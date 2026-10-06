@@ -1,4 +1,5 @@
 from utility.constants import Constants
+from utility.exceptions import InputError
 
 CONST = Constants()
 
