@@ -71,33 +71,33 @@ class TransitionTest(unittest.TestCase):
             Transition()
 
     def test_str_for_excitation(self):
-        transition = self._make(from_level='2s', to_level='2p', trans='ex')
-        self.assertEqual(str(transition), '2s-2p',
+        transition = self._make(from_level='1n', to_level='3n', trans='ex')
+        self.assertEqual(str(transition), '1n-3n',
                          msg='str of an excitation Transition is expected to be from_level-to_level.')
 
     def test_str_for_deexcitation(self):
-        transition = self._make(from_level='2p', to_level='2s', trans='de-ex')
-        self.assertEqual(str(transition), '2p-2s',
+        transition = self._make(from_level='3n', to_level='1n', trans='de-ex')
+        self.assertEqual(str(transition), '3n-1n',
                          msg='str of a de-excitation Transition is expected to be from_level-to_level.')
 
     def test_str_for_cx_eloss_ion(self):
-        self.assertEqual(str(self._make(from_level='2s', to_level=None, trans='cx')), '2s-cx',
+        self.assertEqual(str(self._make(from_level='1n', to_level=None, trans='cx')), '1n-cx',
                          msg='str of a charge-exchange Transition is expected to be from_level-cx.')
-        self.assertEqual(str(self._make(from_level='2s', to_level=None, trans='eloss')), '2s-eloss',
+        self.assertEqual(str(self._make(from_level='1n', to_level=None, trans='eloss')), '1n-eloss',
                          msg='str of an electron-loss Transition is expected to be from_level-eloss.')
-        self.assertEqual(str(self._make(from_level='2s', to_level=None, trans='ion')), '2s-ion',
+        self.assertEqual(str(self._make(from_level='1n', to_level=None, trans='ion')), '1n-ion',
                          msg='str of an ionization Transition is expected to be from_level-ion.')
 
     def test_repr_contains_collision_and_levels(self):
-        transition = self._make(from_level='2s', to_level='2p', trans='ex')
+        transition = self._make(from_level='1n', to_level='3n', trans='ex')
         representation = repr(transition)
         self.assertIn('Collision of: H + e', representation,
                       msg='repr(Transition) is expected to include projectile and target labels.')
         self.assertIn('with transition: ex', representation,
                       msg='repr(Transition) is expected to include the transition name.')
-        self.assertIn('from level: 2s', representation,
+        self.assertIn('from level: 1n', representation,
                       msg='repr(Transition) is expected to include from_level.')
-        self.assertIn('to_level: 2p', representation,
+        self.assertIn('to_level: 3n', representation,
                       msg='repr(Transition) is expected to include to_level.')
 
 
