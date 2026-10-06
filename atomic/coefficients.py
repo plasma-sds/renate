@@ -1,6 +1,6 @@
 import numpy as np
-from renate_od.atomic import tools
-from renate_od.atomic import cross_section
+from atomic import tools
+from atomic import cross_section
 import scipy.constants as sc
 
 """
