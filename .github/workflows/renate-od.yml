@@ -35,6 +35,7 @@ jobs:
             atomic.toolstest.AtomicDB_to_HDF_WriterTest \
             atomic.atomic_dbtest.RenateDBTest \
             atomic.neutral_dbtest.NeutralDBTest \
+            atomic.hydrogenic_cross_sectionstest.HydrogenicDataTest \
             utility.accessdatatest.AccessDataTest \
             utility.converttest.ConvertTest \
             utility.getdatatest.GetDataTest \
