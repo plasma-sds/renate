@@ -35,7 +35,6 @@ class AtomicDB_to_HDF_WriterTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(self.writer.path),
                         msg='AtomicDB HDF output file is expected at: ' + self.writer.path)
 
-    def test_atomicdb_to_hdf_writer_output(self):
         grid = np.linspace(0,1,100)
         density = np.full_like(grid, 1e19)
         temperature = np.full_like(grid, 1e3)
