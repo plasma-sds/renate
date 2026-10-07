@@ -45,20 +45,20 @@ class AccessData(object):
 
         tree = etree.parse(setup_path_name)
         body = tree.getroot().find('body')
-        self.dummy_directory = body.find('dummy_directory').text
-        self.common_local_data_directory = os.path.join(os.path.dirname(__file__), '..',
-                                                        body.find('common_local_data_directory').text)
-        self.user_local_data_directory = os.path.join(os.path.dirname(__file__), '..',
-                                                      body.find('user_local_data_directory').text)
+        self.dummy_directory = self._normalize_local_path(body.find('dummy_directory').text)
+        self.common_local_data_directory = self._resolve_local_directory(
+            body.find('common_local_data_directory').text)
+        self.user_local_data_directory = self._resolve_local_directory(
+            body.find('user_local_data_directory').text)
         self.server_address = body.find('server_address').text
         port_node = body.find('server_port')
         self.server_port = int(port_node.text) if port_node is not None and port_node.text else 22
         self.server_user = body.find('user_name').text
-        self.server_private_access = body.find('server_private_data').text
-        self.server_public_write_access = body.find('server_public_data').text
+        self.server_private_access = self._normalize_url_path(body.find('server_private_data').text)
+        self.server_public_write_access = self._normalize_url_path(body.find('server_public_data').text)
         self.server_public_address = body.find('server_public_address').text
         self.contact_address = body.find('contact_address').text
-        self.private_key_path = body.find('private_key').text
+        self.private_key_path = self._normalize_local_path(body.find('private_key').text)
 
     def _set_private_connection(self):
         self._set_private_key()
@@ -71,7 +71,10 @@ class AccessData(object):
             print('SSHClient configuration failed. No RSAKey was set.')
 
     def _set_private_key(self):
-        key_path = os.path.join(os.path.dirname(__file__), '..', self.private_key_path)
+        if os.path.isabs(self.private_key_path):
+            key_path = self.private_key_path
+        else:
+            key_path = os.path.join(os.path.dirname(__file__), '..', self.private_key_path)
         if os.path.isfile(key_path):
             try:
                 self.private_key = paramiko.RSAKey.from_private_key_file(key_path)
@@ -92,6 +95,7 @@ class AccessData(object):
             local_path = self.data_path_name
         elif not isinstance(local_path, str):
             raise TypeError('File local path input is expected to be of str type.')
+        local_path = self._normalize_local_path(local_path)
         self.common_local_data_path = os.path.join(self.common_local_data_directory, local_path)
         self.user_local_data_path = os.path.join(self.user_local_data_directory, local_path)
         self.user_local_dummy_path = os.path.join(self.user_local_data_directory,
@@ -105,6 +109,26 @@ class AccessData(object):
         self.server_public_path = self._set_public_server_path(server_path)
         self.server_private_path = self._set_private_server_path(server_path)
         self.server_public_write_access_path = self._set_public_server_write_access_path(server_path)
+
+    def _normalize_local_path(self, path):
+        """
+        Treat both '/' and '\\' as separators, then convert to the current OS.
+        """
+        if path is None:
+            return None
+        if not isinstance(path, str):
+            raise TypeError('Local path input is expected to be of str type.')
+        return os.path.normpath(path.replace('\\', '/'))
+
+    def _resolve_local_directory(self, path):
+        """
+        Absolute XML paths are used as-is. Relative paths are resolved from
+        the project root (parent of the utility package).
+        """
+        path = self._normalize_local_path(path)
+        if os.path.isabs(path):
+            return path
+        return os.path.join(os.path.dirname(__file__), '..', path)
 
     def _normalize_url_path(self, path):
         """
