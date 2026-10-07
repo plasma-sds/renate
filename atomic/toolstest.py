@@ -20,6 +20,7 @@ class AtomicDB_to_HDF_WriterTest(unittest.TestCase):
         self.out_path = os.path.join(os.path.dirname(__file__), '..',
                                     'data', 'dummy', 'atomic_data', 'dummy', 'rates', 'writer_test')
         os.mkdir(self.out_path)
+        self.beam = None
 
     def tearDown(self):
         del self.beam
