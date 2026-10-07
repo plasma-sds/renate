@@ -49,13 +49,14 @@ class AccessDataTest(unittest.TestCase):
                          msg='Contact information does not match expected contact information.')
 
     def test_user_local_directory(self):
-        self.assertEqual(self.access.user_local_data_directory, os.path.join(os.path.dirname(__file__), '..', 'data'),
+        self.assertEqual(os.path.normpath(self.access.user_local_data_directory),
+                         os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'data')),
                          msg='User local data path does not match expected user local data path.')
 
     def test_user_local_common_directory(self):
-        self.assertEqual(self.access.common_local_data_directory, os.path.join(os.path.dirname(__file__), '..',
-                         'common_data'), msg='User local common data path does not match expected user local '
-                                             'common data path.')
+        self.assertEqual(os.path.normpath(self.access.common_local_data_directory),
+                         os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'common_data')),
+                         msg='User local common data path does not match expected user local common data path.')
 
     def test_private_key(self):
         self.assertIsInstance(self.access.private_key_path, str, msg='The default private key path does not '
@@ -102,7 +103,7 @@ class AccessDataTest(unittest.TestCase):
             self.access.disconnect()
 
     def test_server_path_setup(self):
-        path = self.TEST_PATH + '/' + self.PRIVATE_TEST
+        path = self.TEST_PATH + self.PRIVATE_TEST
         self.access._server_path_setup(server_path=path)
         self.assertEqual(self.access.server_private_path, self.access.server_private_access + '/' + path,
                          msg='Server private path does not match expected server private path.')
@@ -110,16 +111,18 @@ class AccessDataTest(unittest.TestCase):
                          msg='Server public path does not match expected server public path.')
 
     def test_local_path_setup(self):
-        path = self.TEST_PATH + '/' + self.PRIVATE_TEST
+        path = self.TEST_PATH + self.PRIVATE_TEST
         self.access._local_path_setup(local_path=path)
-        self.assertEqual(self.access.common_local_data_path,
-                         os.path.join(self.access.common_local_data_directory, path),
+        self.assertEqual(os.path.normpath(self.access.common_local_data_path),
+                         os.path.normpath(os.path.join(self.access.common_local_data_directory, path)),
                          msg='Actual common local path does not match expected common local path.')
-        self.assertEqual(self.access.user_local_data_path, os.path.join(self.access.user_local_data_directory, path),
+        self.assertEqual(os.path.normpath(self.access.user_local_data_path),
+                         os.path.normpath(os.path.join(self.access.user_local_data_directory, path)),
                          msg='Actual user local path does not match expected user local path.')
-        self.assertEqual(self.access.user_local_dummy_path, os.path.join(self.access.user_local_data_directory,
-                         self.access.dummy_directory, path), msg='Actual user local dummy path does not match expected '
-                                                                 'user local dummy path.')
+        self.assertEqual(os.path.normpath(self.access.user_local_dummy_path),
+                         os.path.normpath(os.path.join(self.access.user_local_data_directory,
+                                                       self.access.dummy_directory, path)),
+                         msg='Actual user local dummy path does not match expected user local dummy path.')
 
     def test_public_server_data_check(self):
         self.access._server_path_setup(self.TEST_PATH + self.PUBLIC_TEST)
