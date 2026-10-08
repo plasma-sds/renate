@@ -12,25 +12,27 @@ from atomic.tools import AtomicDB_to_HDF_Writer
 
 class AtomicDB_to_HDF_WriterTest(unittest.TestCase):
 
-    def setUpClass(self):
-        self.atomicdb_test = AtomicDBTest()
-        self.atomicdb_test.setUp()
-        self.atomicdb = self.atomicdb_test.atomic_db
-        self.writer = AtomicDB_to_HDF_Writer(self.atomicdb)
-        self.out_path = os.path.join(os.path.dirname(__file__), '..',
+    @classmethod
+    def setUpClass(cls):
+        cls.atomicdb_test = AtomicDBTest()
+        cls.atomicdb_test.setUp()
+        cls.atomicdb = cls.atomicdb_test.atomic_db
+        cls.writer = AtomicDB_to_HDF_Writer(cls.atomicdb)
+        cls.out_path = os.path.join(os.path.dirname(__file__), '..',
                                     'data', 'dummy', 'atomic_data', 'dummy', 'rates', 'writer_test')
-        os.mkdir(self.out_path)
-        self.writer.write_to(self.out_path)
-        self.assertTrue(os.path.isfile(self.writer.path),
-                        msg='AtomicDB HDF output file is expected at: ' + self.writer.path)
+        os.mkdir(cls.out_path)
+        cls.writer.write_to(cls.out_path)
+        cls.assertTrue(os.path.isfile(cls.writer.path),
+                        msg='AtomicDB HDF output file is expected at: ' + cls.writer.path)
 
-    def tearDownClass(self):
-        if os.path.isdir(self.out_path):
-            shutil.rmtree(self.out_path, ignore_errors=True)
-        del self.out_path
-        del self.writer
-        del self.atomicdb
-        del self.atomicdb_test
+    @classmethod
+    def tearDownClass(cls):
+        if os.path.isdir(cls.out_path):
+            shutil.rmtree(cls.out_path, ignore_errors=True)
+        del cls.out_path
+        del cls.writer
+        del cls.atomicdb
+        del cls.atomicdb_test
 
     def setUp(self):
         self.beam = None
