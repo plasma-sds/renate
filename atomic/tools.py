@@ -17,8 +17,12 @@ class AtomicDB_to_HDF_Writer:
         self.level_num = atomicdb.atomic_levels
         self.einsteins = atomicdb.spontaneous_trans
         self.temperature_axis = atomicdb.temperature_axis
-        self.impurities = atomicdb.components[atomicdb.components['q'] > 1]['q'].values
-        self.ions = atomicdb.components[atomicdb.components['q'] > 0]['q'].values
+        self.impurities = atomicdb.components[atomicdb.components['q'] > 1]
+        self.ions = atomicdb.components[atomicdb.components['q'] > 0]
+        proton = self.ions[(self.ions['q']==1) &
+                                     (self.ions['Z']==1) &
+                                     (self.ions['A']==1)]
+        self.proton_ind = self.ions.index.get_indexer(proton.index)[0]
 
         self.excitation_interpolator_dict = {'electron': atomicdb.electron_impact_trans}
         self.loss_interpolator_dict = {'electron': atomicdb.electron_impact_loss}
@@ -26,7 +30,7 @@ class AtomicDB_to_HDF_Writer:
         ion_impact_trans_array = np.array(atomicdb.ion_impact_trans)
         ion_impact_loss_array = np.array(atomicdb.ion_impact_loss)
 
-        for i,ion in enumerate(self.ions):
+        for i,ion in enumerate(self.ions.index):
             self.excitation_interpolator_dict[ion] = ion_impact_trans_array[:,:,i]
             self.loss_interpolator_dict[ion] = ion_impact_loss_array[:,i]
 
@@ -50,7 +54,17 @@ class AtomicDB_to_HDF_Writer:
 
         self.electron_impact_loss = self.__build_rate_matrix('loss', 'electron')
         self.ion_impact_loss = self.__build_ion_rate_matrix('loss')
-        self.all_loss = np.vstack((np.expand_dims(self.electron_impact_loss, 0), self.ion_impact_loss))
+
+        self.impurity_excitation = np.full((10, self.level_num, self.level_num, self.temperature_axis.shape[0]), np.nan)
+        self.impurity_loss = np.full((10, self.level_num, self.temperature_axis.shape[0]), np.nan)
+        for i,q in enumerate(self.impurities['q']):
+            imp_ind = self.ions[self.ions['q']==q].index
+            self.impurity_excitation[q-2] = self.ion_excitation[int(self.ions.index.get_indexer(imp_ind))]
+            self.impurity_loss[q-2] = self.ion_impact_loss[int(self.ions.index.get_indexer(imp_ind))]
+
+        self.all_loss = np.vstack((np.expand_dims(self.electron_impact_loss, 0),
+                                   np.expand_dims(self.ion_impact_loss[self.proton_ind], 0),
+                                   self.impurity_loss))
 
     def __build_rate_matrix(self, mx_type, target):
         print(mx_type+' '+str(self.beam_type)+'-->'+str(target))
@@ -68,7 +82,7 @@ class AtomicDB_to_HDF_Writer:
 
     def __build_ion_rate_matrix(self, mx_type):
         matrix = []
-        for ion in self.ions:
+        for ion in self.ions.index:
             matrix.append(self.__build_rate_matrix(mx_type, ion))
         return np.array(matrix)
 
@@ -82,13 +96,16 @@ class AtomicDB_to_HDF_Writer:
         rate_data.create_dataset('Beam type', dtype='|S2', data=self.beam_type)
         rate_data.create_dataset('Einstein Coeffs', dtype='<f4', data=self.einsteins)
         rate_data.create_dataset('Temperature axis', dtype='<f8', data=self.temperature_axis)
-        rate_data.create_dataset('Impurity Collisions', dtype='<i2', data=list(self.impurities))
+        rate_data.create_dataset('Impurity Collisions', dtype='<i2', data=list(self.impurities['q']))
 
-        rate_data.create_dataset('Collisional Coeffs/Electron Neutral Collisions', dtype='<f8', data=self.electron_excitation)
-        rate_data.create_dataset('Collisional Coeffs/Proton Neutral Collisions', dtype='<f8', data=self.ion_excitation[0])
-        rate_data.create_dataset('Collisional Coeffs/Impurity Neutral Collisions', dtype='<f8', data=self.ion_excitation[1:])
-
-        rate_data.create_dataset('Collisional Coeffs/Electron Loss Collisions', dtype='<f8', data=self.all_loss)
+        rate_data.create_dataset('Collisional Coeffs/Electron Neutral Collisions', dtype='<f8',
+                                 data=self.electron_excitation)
+        rate_data.create_dataset('Collisional Coeffs/Proton Neutral Collisions', dtype='<f8',
+                                 data=self.ion_excitation[self.proton_ind])
+        rate_data.create_dataset('Collisional Coeffs/Impurity Neutral Collisions', dtype='<f8',
+                                 data=self.impurity_excitation)
+        rate_data.create_dataset('Collisional Coeffs/Electron Loss Collisions', dtype='<f8',
+                                 data=self.all_loss)
         rate_data.close()
 
         print(f'File written to {self.path}')
