@@ -22,8 +22,7 @@ class AtomicDB_to_HDF_WriterTest(unittest.TestCase):
                                     'data', 'dummy', 'atomic_data', 'dummy', 'rates', 'writer_test')
         os.mkdir(cls.out_path)
         cls.writer.write_to(cls.out_path)
-        cls.assertTrue(os.path.isfile(cls.writer.path),
-                        msg='AtomicDB HDF output file is expected at: ' + cls.writer.path)
+        assert os.path.isfile(cls.writer.path), f"AtomicDB HDF output file is expected at: {cls.writer.path}"
 
     @classmethod
     def tearDownClass(cls):
