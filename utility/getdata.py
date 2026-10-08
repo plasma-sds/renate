@@ -71,28 +71,24 @@ class GetData(AccessData):
                 self.data = pandas.read_hdf(self.access_path)
                 print('Data read to Pandas DataFrame from HD5 file: ' + self.access_path)
             elif len(self.data_key) > 1:
-                print('Data could NOT be read to Pandas DataFrame from HD5 file: ' + self.access_path +
-                      " with key: " + str(self.data_key) + '. Must have only one key maximum!')
-                raise ValueError
+                raise ValueError('Data could NOT be read to Pandas DataFrame from HD5 file: ' +
+                                 self.access_path + " with key: " + str(self.data_key) +
+                                 '. Must have only one key maximum!')
             else:
                 self.data = pandas.read_hdf(self.access_path, key=self.data_key[0])
                 print('Data read to Pandas DataFrame from HD5 file: ' +
                       self.access_path + " with key: " + str(self.data_key[0]))
-        except ValueError:
-                print('Data could NOT be read to Pandas DataFrame from HD5 file: ' + self.access_path +
-                      " with key: " + str(self.data_key))
+        except ValueError as exc:
+            raise ValueError('Data could NOT be read to Pandas DataFrame from HD5 file: ' +
+                             self.access_path + " with key: " + str(self.data_key)) from exc
 
     def read_h5_to_array(self):
         if not self.data_key:
-            print('Data could NOT be read to array from HD5 file: ' + self.access_path + '. Key is missing!')
-            raise ValueError
+            raise ValueError('Data could NOT be read to array from HD5 file: ' +
+                             self.access_path + '. Key is missing!')
         try:
-            with h5py.File(self.access_path, 'r') as hdf5_id:
-                hdf5_group = hdf5_id
-                for key in self.data_key:
-                    hdf5_group = hdf5_group[key]
-                self.data = hdf5_group.value
-                hdf5_id.close()
+            with h5py.File(self.access_path, 'r') as file:
+                self.data = numpy.array(file[self.data_key[0]])
             print("Data read to array from HD5 file: " + self.access_path + " with key: " + str(self.data_key))
         except ValueError:
             print("Data could NOT be read to array from HD5 file: " + self.access_path +

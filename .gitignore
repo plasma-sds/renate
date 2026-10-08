@@ -41,9 +41,13 @@ target/
 
 # dotenv
 .env
+.venv
 
 # UnitTest Fails
 .cache
 
 ### RENATE OD specific ###
 data/
+
+### Data Path setup in utility
+utility/local_datapaths.xml

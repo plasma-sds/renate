@@ -1,12 +1,13 @@
 import utility
 from utility.constants import Constants
+from utility.exceptions import RenateNotValidTransitionError
 import pandas
 import numpy
 from copy import deepcopy
 from lxml import etree
 from crm_solver.coefficientmatrix import CoefficientMatrix
 from crm_solver.ode import Ode
-from crm_solver.atomic_db import AtomicDB
+from atomic.atomic_db import AtomicDB
 
 
 class Beamlet:
@@ -71,7 +72,7 @@ class Beamlet:
             print('Beam evolution not calculated.')
             return
         else:
-            raise Exception('The numerical solver: ' + solver + ' is not supported. '
+            raise ValueError('The numerical solver: ' + solver + ' is not supported. '
                             'Supported solvers are: numerical, analytical, disregard.')
 
     def __was_beamevolution_performed(self):
@@ -86,10 +87,12 @@ class Beamlet:
             from_level, to_level, ground_level, transition_label = self.atomic_db.set_default_atomic_levels()
         if isinstance(to_level, str) and isinstance(from_level, str):
             if self.atomic_db.atomic_dict[to_level] >= self.atomic_db.atomic_dict[from_level]:
-                raise Exception('Dude! Please stop screwing around. '
-                                'Electrons spontaneously transit from higher to lower atomic states.')
+                raise RenateNotValidTransitionError(
+                    'Electrons spontaneously transit from higher to lower atomic states. '
+                    'The requested transition from level ' + from_level + ' to level ' + to_level +
+                    ' is not valid.')
         else:
-            raise Exception('The expected input for atomic transitions are strings. '
+            raise TypeError('The expected input for atomic transitions are strings. '
                             'Bundled-n for H,D,T beam species ex:[1, 2, ... 6]. '
                             'l-n resolved labels for Li ex: [2s, 2p, ... 4f] and Na ex: [3s, 3p, ... 5s]')
         if self.__was_beamevolution_performed():

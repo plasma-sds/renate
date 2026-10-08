@@ -6,7 +6,8 @@ import utility.convert as uc
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import pandas
-from crm_solver.neutral_db import NeutralDB
+from atomic.neutral_db import NeutralDB
+from atomic.internal_db import InternalDB
 
 
 class RenateDB:
@@ -20,6 +21,12 @@ class RenateDB:
         self.__set_atomic_dictionary()
         self.__set_rates_path(rate_type)
         self.__set_charge_state_lib()
+        self.spontaneous_trans = self.get_from_renate_atomic('spontaneous_transition')
+        self.temperature_axis = self.get_from_renate_atomic('temperature')
+        self.electron_loss = self.get_from_renate_atomic('ionization_terms')
+        self.electron_impact_trans = self.get_from_renate_atomic('electron_transition')
+        self.proton_impact_trans = self.get_from_renate_atomic('ion_transition')
+        self.impurity_impact_trans = self.get_from_renate_atomic('impurity_transition')
 
     def __set_impurity_mass_scaling_dictionary(self):
         self.impurity_mass_normalization = {'charge-1': 1,
@@ -38,7 +45,7 @@ class RenateDB:
         self.energy = self.param.getroot().find('body').find('beamlet_energy').text
         self.species = self.param.getroot().find('body').find('beamlet_species').text
         self.__get_atomic_mass()
-        self.__get_projectile_velocity()
+        self._get_projectile_velocity()
 
     def __get_atomic_mass(self):
         data_path_name = os.path.join('atomic_data', self.param.getroot().find('body').find('beamlet_species').text,
@@ -47,17 +54,18 @@ class RenateDB:
         mass_str = getdata.GetData(data_path_name=data_path_name, data_format="array").data
         try:
             self.mass = float(mass_str)
-        except ValueError:
-            print('Unexpected data in file: ' + data_path_name + '(Expecting single float!)')
-            raise ValueError
+        except ValueError as exc:
+            raise ValueError('Unexpected data in file: ' + data_path_name +
+                             ' (Expecting single float!)') from exc
 
-    def __get_projectile_velocity(self):
+    def _get_projectile_velocity(self):
         self.velocity = uc.calculate_velocity_from_energy(uc.convert_keV_to_eV(float(self.energy)), self.mass)
+        return self.velocity
 
     def __set_atomic_dictionary(self):
         assert isinstance(self.species, str)
         if self.species not in ['H', 'D', 'T', 'Li', 'Na', 'dummy']:
-            raise Exception(self.species + ' beam atomic data not supported')
+            raise ValueError(self.species + ' beam atomic data not supported')
         if self.species in ['H', 'D', 'T']:
             self.atomic_dict = {'1n': 0, '2n': 1, '3n': 2, '4n': 3, '5n': 4, '6n': 5}
             self.atomic_levels = 6
@@ -117,20 +125,52 @@ class RenateDB:
         else:
             raise ValueError('Data ' + source + ' is not located and supported in the Renate rate library.')
 
+    def __interp1d_scaled_ion(self, rates, target):
+        scaling_mass_ratio = float(target['A']) /\
+            self.impurity_mass_normalization['charge-'+str(target['q'])]
+        return interp1d(self.temperature_axis*scaling_mass_ratio, rates, fill_value='extrapolate')
 
-class AtomicDB(RenateDB):
-    def __init__(self, atomic_source='renate', param=None, rate_type='default', resolution=None,
+    def get_rate_interpolator(self, reaction_type, target, from_level, to_level=None):
+        if reaction_type == 'electron_loss':
+            if target['q'] == -1:
+                return interp1d(self.temperature_axis, uc.convert_from_cm2_to_m2(
+                    self.electron_loss[0, from_level, :]), fill_value='extrapolate')
+            else:
+                return self.__interp1d_scaled_ion(uc.convert_from_cm2_to_m2(
+                    self.electron_loss[target['q'], from_level, :]), target)
+        if reaction_type == 'excitation':
+            if target['q'] == -1:
+                return interp1d(self.temperature_axis, uc.convert_from_cm2_to_m2(
+                    self.electron_impact_trans[from_level, to_level, :]), fill_value='extrapolate')
+            if target['q'] == 1:
+                return self.__interp1d_scaled_ion(uc.convert_from_cm2_to_m2(
+                    self.proton_impact_trans[from_level, to_level, :]), target)
+            else:
+                return self.__interp1d_scaled_ion(uc.convert_from_cm2_to_m2(
+                    self.impurity_impact_trans[target['q']-2, from_level, to_level, :]), target)
+
+
+class AtomicDB():
+    def __init__(self, atomic_source='renate', cross_section_source=None, param=None, rate_type='default', resolution=None,
                  data_path='beamlet/testimp0001.xml', components=None, atomic_ceiling=False):
         assert isinstance(atomic_source, str)
         assert isinstance(components, pandas.core.frame.DataFrame)
         self.components = components
-        self.__set_neutral_db(param=param, resolution=resolution)
+        self.param = param
+        self.__set_neutral_db(param=self.param, resolution=resolution)
         if atomic_source == 'renate':
-            RenateDB.__init__(self, param, rate_type, data_path)
-            self.__set_ceiling_for_atomic_levels(atomic_ceiling=atomic_ceiling)
-            self.__generate_rate_function_db()
+            self.provider = RenateDB(self.param, rate_type, data_path)
+        elif atomic_source == 'internal':
+            self.provider = InternalDB(self.param, cross_section_source, data_path)
         else:
             raise ValueError('Currently the requested atomic DB: ' + atomic_source + ' is not supported')
+        self.velocity = self.provider._get_projectile_velocity()
+        self.atomic_dict = self.provider.atomic_dict
+        self.inv_atomic_dict = self.provider.inv_atomic_dict
+        self.atomic_levels = self.provider.atomic_levels
+        self.set_default_atomic_levels = self.provider.set_default_atomic_levels
+        self.__set_ceiling_for_atomic_levels(atomic_ceiling=atomic_ceiling)
+        self.__generate_rate_function_db()
 
     def __set_neutral_db(self, param, resolution):
         if (self.components['q'] == 0).any():
@@ -157,29 +197,26 @@ class AtomicDB(RenateDB):
             elif self.are_neutrals:
                 if atomic_ceiling > self.neutral_db.atomic_levels:
                     raise ValueError('The atomic ceil can not be above available neutral atomic levels. '
-                                     'Current max nr of supported levels for neutrals are ' + \
-                                     str(self.neutral_db.atomic_levels))
+                                     'Current max nr of supported levels for neutrals are '
+                                     + str(self.neutral_db.atomic_levels))
             else:
                 self.atomic_ceiling = atomic_ceiling
 
     def __generate_rate_function_db(self):
-        self.__set_temperature_axis()
+        self.temperature_axis = self.provider.temperature_axis
         self.__set_einstein_coefficient_db()
         self.__set_impact_loss_functions()
         self.__set_electron_impact_transition_functions()
         self.__set_ion_impact_transition_functions()
-
-    def __set_temperature_axis(self):
-        self.temperature_axis = self.get_from_renate_atomic('temperature')
 
     def __set_einstein_coefficient_db(self):
         '''''
         Contains spontanous transition data for loaded atomic type.
         Indexing convention: data[to_level, from_level]
         '''''
-        self.spontaneous_trans = self.get_from_renate_atomic('spontaneous_transition')
+        self.spontaneous_trans = self.provider.spontaneous_trans
         if self.atomic_levels != int(self.spontaneous_trans.size ** 0.5):
-            raise Exception('Loaded atomic database is inconsistent with atomic data dictionary. Wrong data loaded.')
+            raise RuntimeError('Loaded atomic database is inconsistent with atomic data dictionary. Wrong data loaded.')
 
     def __set_impact_loss_functions(self):
         '''''
@@ -187,16 +224,15 @@ class AtomicDB(RenateDB):
         Indexing convention: data[from_level][target] for ion impact electron loss interaction.
         Indexing convention: data[from_level] for electron impact electron loss interactions. 
         '''''
-        raw_impact_loss_transition = self.get_from_renate_atomic('ionization_terms')
         self.electron_impact_loss, self.ion_impact_loss = [], []
         for from_level in range(self.atomic_ceiling):
             from_level_functions = []
-            self.electron_impact_loss.append(interp1d(self.temperature_axis, uc.convert_from_cm2_to_m2(
-                raw_impact_loss_transition[0, from_level, :]), fill_value='extrapolate'))
+            self.electron_impact_loss.append(
+                self.provider.get_rate_interpolator('electron_loss', self.components.loc['electron'], from_level))
             for target in self.components.T.keys():
                 if not (target != 'electron') ^ (not('neutral' in target)):
-                    from_level_functions.append(self.__interp1d_scaled_ion(uc.convert_from_cm2_to_m2(
-                        raw_impact_loss_transition[self.components['q'][target], from_level, :]), target))
+                    from_level_functions.append(
+                        self.provider.get_rate_interpolator('electron_loss', self.components.loc[target], from_level))
             self.ion_impact_loss.append(tuple(from_level_functions))
         self.electron_impact_loss, self.ion_impact_loss = tuple(self.electron_impact_loss), tuple(self.ion_impact_loss)
 
@@ -205,13 +241,12 @@ class AtomicDB(RenateDB):
         Contains electron impact transition data for loaded atomic type.
         Indexing convention: data[from_level][to_level]
         '''''
-        raw_electron_transition = self.get_from_renate_atomic('electron_transition')
         self.electron_impact_trans = []
         for from_level in range(self.atomic_ceiling):
             from_level_functions = []
             for to_level in range(self.atomic_ceiling):
-                from_level_functions.append(interp1d(self.temperature_axis, uc.convert_from_cm2_to_m2(
-                    raw_electron_transition[from_level, to_level, :]), fill_value='extrapolate'))
+                from_level_functions.append(
+                    self.provider.get_rate_interpolator('excitation', self.components.loc['electron'], from_level, to_level))
             self.electron_impact_trans.append(tuple(from_level_functions))
         self.electron_impact_trans = tuple(self.electron_impact_trans)
 
@@ -220,28 +255,18 @@ class AtomicDB(RenateDB):
         Contains spontanous transition data for loaded atomic type.
         Indexing convention: data[from_level, to_level, target]
         '''''
-        raw_proton_transition = self.get_from_renate_atomic('ion_transition')
-        raw_impurity_transition = self.get_from_renate_atomic('impurity_transition')
         self.ion_impact_trans = []
         for from_level in range(self.atomic_ceiling):
             from_level_functions = []
             for to_level in range(self.atomic_ceiling):
                 to_level_functions = []
                 for target in self.components.T.keys():
-                    if self.components['q'][target] == 1:
-                        to_level_functions.append(self.__interp1d_scaled_ion(uc.convert_from_cm2_to_m2(
-                            raw_proton_transition[from_level, to_level, :]), target))
-                    elif self.components['q'][target] > 1:
-                        to_level_functions.append(self.__interp1d_scaled_ion(uc.convert_from_cm2_to_m2(
-                            raw_impurity_transition[self.components['q'][target]-2, from_level, to_level, :]), target))
+                    if self.components['q'][target] > 0:
+                        to_level_functions.append(
+                            self.provider.get_rate_interpolator('excitation', self.components.loc[target], from_level, to_level))
                 from_level_functions.append(tuple(to_level_functions))
             self.ion_impact_trans.append(tuple(from_level_functions))
         self.ion_impact_trans = tuple(self.ion_impact_trans)
-
-    def __interp1d_scaled_ion(self, rates, target):
-        scaling_mass_ratio = float(self.components['A'][target]) /\
-                             self.impurity_mass_normalization['charge-'+str(self.components['q'][target])]
-        return interp1d(self.temperature_axis*scaling_mass_ratio, rates, fill_value='extrapolate')
 
     def plot_rates(self, *args, temperature=None, external_density=1.):
         if temperature is None:

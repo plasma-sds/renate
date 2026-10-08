@@ -11,6 +11,6 @@ class SpectrometerVisibleIds(ImasObject):
     def load_spectrometer_vis_ids(self):
         try:
             self.spectro_vis = self.imas_pointer.get('spectrometer_visible')
-        except:
+        except Exception as exc:
             raise IdsInstanceLoadError('No spectrometer_visible IDS was found for shot: '
-                                       + str(self.shot) + ' at run ' + str(self.run))
+                                       + str(self.shot) + ' at run ' + str(self.run)) from exc

@@ -25,8 +25,8 @@ class OdeTest(unittest.TestCase):
     EXPECTED_SIZE_100 = 100
     EXPECTED_SIZE_200 = 200
 
-    ACCEPTED_TYPES = [numpy.int, numpy.int8, numpy.int16, numpy.int32, numpy.int64,
-                      numpy.float, numpy.float16, numpy.float32, numpy.float64]
+    ACCEPTED_TYPES = [int, numpy.int8, numpy.int16, numpy.int32, numpy.int64,
+                      float, numpy.float16, numpy.float32, numpy.float64]
 
     INIT_CONDITION_GENERAL = numpy.array([1., 2.])
 

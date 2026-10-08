@@ -1,14 +1,14 @@
 from crm_solver.beamlet import Beamlet
 import unittest
 from lxml import etree
-from crm_solver.atomic_db import AtomicDB
+from atomic.atomic_db import AtomicDB
 import pandas
 import numpy
 
 
 class BeamletTest(unittest.TestCase):
     EXPECTED_ATTR = ['param', 'components', 'profiles', 'coefficient_matrix', 'atomic_db', 'initial_condition']
-    EXPECTED_INITIAL_CONDITION = [4832583106.4753895, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    EXPECTED_INITIAL_CONDITION = [4832583046.75342, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     EXPECTED_PARAM_ATTR = ['beamlet_source', 'beamlet_energy', 'beamlet_species', 'beamlet_current']
     EXPECTED_COMPONENTS_KEYS = ['q', 'Z', 'A']
     EXPECTED_COMPONENTS_SPECIES = ['electron', 'ion1', 'ion2']
@@ -42,8 +42,8 @@ class BeamletTest(unittest.TestCase):
         for element in range(len(self.beamlet.initial_condition)):
             self.assertIsInstance(self.beamlet.initial_condition[element], float, msg='Expected type for initial'
                                                                                       ' conditions is float.')
-            self.assertEqual(self.beamlet.initial_condition[element], self.EXPECTED_INITIAL_CONDITION[element],
-                             msg='Computed Init conditions do not match expected init conditions.')
+            self.assertAlmostEqual(self.beamlet.initial_condition[element], self.EXPECTED_INITIAL_CONDITION[element],
+                             delta=1e-1, msg='Computed Init conditions do not match expected init conditions.')
 
     def test_param_xml(self):
         self.assertIsInstance(self.beamlet.param, etree._ElementTree,

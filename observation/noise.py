@@ -219,7 +219,7 @@ class PMT(Noise):
                 if signal[j] * dynode_gain > 10:
                     signal[j] = self.normal(signal[j] * dynode_gain, math.sqrt(signal[j] * dynode_gain))
                 else:
-                    signal[j] = numpy.float(self.poisson(signal[j] * dynode_gain))
+                    signal[j] = float(self.poisson(signal[j] * dynode_gain))
         return signal
 
     def _pmt_thermionic_dark_electron_generator(self, signal_length, dark_current, dynode_gain, dynode_number,

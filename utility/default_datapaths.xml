@@ -4,11 +4,12 @@
   </head>
   <body>
     <server_address>deep.reak.bme.hu</server_address>
+    <server_port>72</server_port>
     <server_private_data>private_html/renate-od</server_private_data>
     <server_public_data>public_html/renate-od</server_public_data>
     <user_name>data</user_name>
     <server_public_address>http://deep.reak.bme.hu/~data/renate-od</server_public_address>
-    <private_key>data/deep_data_key</private_key>
+    <private_key>data\deep_data_key</private_key>
     <dummy_directory>dummy</dummy_directory>
     <common_local_data_directory>common_data</common_local_data_directory>
     <user_local_data_directory>data</user_local_data_directory>

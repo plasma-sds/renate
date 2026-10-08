@@ -1,7 +1,7 @@
 import unittest
 from utility.input import AtomicInput
 from utility.exceptions import RenateNotValidTransitionError
-from crm_solver.atomic_db import NeutralDB
+from atomic.atomic_db import NeutralDB
 
 
 class NeutralDBTest(unittest.TestCase):

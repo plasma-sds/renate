@@ -1,19 +1,28 @@
-from utility.getdata import GetData
+import os
+from utility.getdata import GetData, AccessData
 from lxml import etree
+from utility.accessdata import DEFAULT_SETUP, FALLBACK_SETUP
+
+OUTPUT_SUBDIR = 'output'
 
 
 class WriteData:
-    def __init__(self, root_path="data/"):
+    def __init__(self, root_path=None):
+        if root_path is None:
+            access_data = AccessData(DEFAULT_SETUP)
+            root_path = os.path.join(access_data.user_local_data_directory, OUTPUT_SUBDIR) + os.sep
         self.root_path = root_path
 
     def write_beamlet_profiles(self, beamlet, subdir=''):
         output_path = beamlet.param.getroot().find('head').find('id').text
-        h5_output_path = subdir + output_path + ".h5"
-        xml_output_path = subdir + output_path + ".xml"
-        GetData.ensure_dir(self.root_path + h5_output_path)
+        h5_output_path = os.path.join(subdir, output_path + ".h5")
+        xml_output_path = os.path.join(subdir, output_path + ".xml")
+        h5_full_path = os.path.join(self.root_path, h5_output_path)
+        xml_full_path = os.path.join(self.root_path, xml_output_path)
+        GetData.ensure_dir(h5_full_path)
         try:
-            beamlet.profiles.to_hdf(path_or_buf=self.root_path + h5_output_path, key="profiles")
-            beamlet.components.to_hdf(path_or_buf=self.root_path + h5_output_path, key="components")
+            beamlet.profiles.to_hdf(path_or_buf=h5_full_path, key="profiles")
+            beamlet.components.to_hdf(path_or_buf=h5_full_path, key="components")
             if not isinstance(beamlet.param.getroot().find('body').find('beamlet_history'), etree._Element):
                 new_element = etree.Element('beamlet_history')
                 new_element.text = beamlet.param.getroot().find('body').find('beamlet_source').text
@@ -23,16 +32,17 @@ class WriteData:
                 beamlet.param.getroot().find('body').find('beamlet_history').text = \
                     beamlet.param.getroot().find('body').find('beamlet_source').text
             beamlet.param.getroot().find('body').find('beamlet_source').text = h5_output_path
-            beamlet.param.write(self.root_path + xml_output_path)
-            print('Beamlet profile data written to file: ' + subdir + output_path)
-            return self.root_path+h5_output_path, self.root_path+xml_output_path
-        except:
-            raise Exception('Beamlet profile data could NOT be written to file: ' + subdir + output_path)
+            beamlet.param.write(xml_full_path)
+            print('Beamlet profile data written to file: ' + os.path.join(subdir, output_path))
+            return h5_full_path, xml_full_path
+        except Exception as exc:
+            raise OSError('Beamlet profile data could NOT be written to file: '
+                          + os.path.join(subdir, output_path)) from exc
 
     def write_photon_emission_profile(self, obs_param, emission_profiles, subdir=''):
         output_path = obs_param.getroot().find('head').find('id').text
-        h5_output_path = self.root_path + subdir + output_path + ".h5"
-        xml_output_path = self.root_path + subdir + output_path + ".xml"
+        h5_output_path = os.path.join(self.root_path, subdir, output_path + ".h5")
+        xml_output_path = os.path.join(self.root_path, subdir, output_path + ".xml")
         GetData.ensure_dir(h5_output_path)
         try:
             emission_profiles.to_hdf(path_or_buf=h5_output_path, key='emission_profiles')
@@ -43,5 +53,6 @@ class WriteData:
                 obs_param.getroot().find('body').append(new_element)
             obs_param.write(xml_output_path)
             print('Photon emission profile data written to file: ' + output_path)
-        except:
-            raise Exception('Photon emission profile data could NOT be written to file: ' + output_path)
+        except Exception as exc:
+            raise OSError('Photon emission profile data could NOT be written to file: '
+                          + output_path) from exc

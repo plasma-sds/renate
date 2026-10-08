@@ -1,42 +1,38 @@
-class IdsLoadError(Exception):
-    def __init__(self, *args, **kwargs):
-        pass
-
-    @staticmethod
-    def __new__(*args, **kwargs):
-        """ Create and return a new object.  See help(type) for accurate signature. """
-        pass
+class IdsError(Exception):
+    """Base class for all IDS-related errors."""
+    pass
 
 
-class IdsAttributeLoadError(Exception):
-    def __init__(self, *args, **kwargs):
-        pass
-
-    @staticmethod
-    def __new__(*args, **kwargs):
-        """ Create and return a new object.  See help(type) for accurate signature. """
-        pass
+class IdsLoadError(IdsError):
+    """Raised when a full IDS object cannot be located or loaded for the requested shot/run."""
+    pass
 
 
-class IdsInstanceLoadError(Exception):
-    def __init__(self, *args, **kwargs):
-        pass
-
-    @staticmethod
-    def __new__(*args, **kwargs):
-        """ Create and return a new object.  See help(type) for accurate signature. """
-        pass
+class IdsAttributeLoadError(IdsError):
+    """Raised when a specific attribute (grid, profile, timebase, ...) is missing from an otherwise valid IDS."""
+    pass
 
 
-class RenateAuthorizedUserError(Exception):
-    def __init__(self, *args, **kwargs):
-        pass
-
-    @staticmethod
-    def __new__(*args, **kwargs):
-        """ Create and return a new object.  See help(type) for accurate signature. """
-        pass
+class IdsInstanceLoadError(IdsError):
+    """Raised when a named IDS instance (equilibrium, nbi, spectrometer_visible, ...) cannot be opened."""
+    pass
 
 
-class RenateNotValidTransitionError(Exception):
+class RenateError(Exception):
+    """Base class for all RENATE-specific errors."""
+    pass
+
+
+class RenateAuthorizedUserError(RenateError):
+    """Raised when a code-management operation is attempted by a user without the required privileges."""
+    pass
+
+
+class RenateNotValidTransitionError(RenateError):
+    """Raised when a requested atomic transition is physically meaningless (e.g. from_level == to_level)."""
+    pass
+
+
+class InputError(Exception):
+    """Raised when a public API receives arguments of the wrong type or outside the accepted value set."""
     pass

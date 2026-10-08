@@ -1,19 +1,23 @@
+import os
 import matplotlib.pyplot
 import utility
 from matplotlib.backends.backend_pdf import PdfPages
 import datetime
-from crm_solver.atomic_db import AtomicDB
+from atomic.atomic_db import AtomicDB
 
 
 class BeamletProfiles:
-    def __init__(self, beamlet=None, param_path='output/beamlet/beamlet_test.xml', key=['profiles']):
+    def __init__(self, beamlet=None, param_path='output/beamlet/beamlet_test.xml'):
         if beamlet is None:
             self.param_path = param_path
             self.param = utility.getdata.GetData(data_path_name=self.param_path).data
-            self.access_path = self.param.getroot().find('body').find('beamlet_source').text
-            self.key = key
-            self.components = utility.getdata.GetData(data_path_name=self.access_path, data_key=self.key).data
-            self.profiles = utility.getdata.GetData(data_path_name=self.access_path, data_key=self.key).data
+            # <beamlet_source> stores the HDF5 filename relative to the XML file
+            # (see WriteData.write_beamlet_profiles). Rebuild the full path by
+            # stripping the <xml_filename>.xml from param_path and joining with it.
+            self.access_path = os.path.join(os.path.dirname(self.param_path),
+                                            self.param.getroot().find('body').find('beamlet_source').text)
+            self.components = utility.getdata.GetData(data_path_name=self.access_path, data_key=['components']).data
+            self.profiles = utility.getdata.GetData(data_path_name=self.access_path, data_key=['profiles']).data
             self.atomic_db = AtomicDB(param=self.param, components=self.components)
             self.title = None
         else:
@@ -46,7 +50,7 @@ class BeamletProfiles:
                 axis.plot(self.profiles['beamlet grid'], self.profiles['level '+level]/max_val,
                           '--', label='ROD '+level)
                 axis.set_ylabel('Relative electron population [-]')
-                axis.set_yscale('log', nonposy='clip')
+                axis.set_yscale('log', nonpositive='clip')
             elif plot_type == 'error':
                 axis.set_ylabel('Relative error [-]')
                 axis.plot(self.profiles['beamlet grid'], abs(self.profiles['level '+level]/max_val -
@@ -78,9 +82,9 @@ class BeamletProfiles:
         try:
             axis.plot(self.profiles['beamlet grid'], self.profiles[transition],
                       label='Emission for '+transition, color='r')
-        except KeyError:
-            raise Exception('The requested transition: <'+transition+'> is not in the stored data. '
-                            'Try computing it first or please make sure it exists')
+        except KeyError as exc:
+            raise KeyError('The requested transition: <'+transition+'> is not in the stored data. '
+                           'Try computing it first or please make sure it exists') from exc
         axis.set_ylabel('Linear emission density [ph/sm]')
         axis.yaxis.label.set_color('r')
         axis.legend(loc='upper right')
@@ -171,7 +175,7 @@ class BeamletProfiles:
             axis.plot(self.profiles['beamlet grid'], self.profiles[label], label=label)
         if hasattr(self, 'x_limits'):
             axis.set_xlim(self.x_limits)
-        axis.set_yscale('log', nonposy='clip')
+        axis.set_yscale('log', nonpositive='clip')
         axis.set_xlabel('Distance [m]')
         axis.set_ylabel(axis_name)
         axis.legend(loc='best', ncol=1)

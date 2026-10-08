@@ -8,10 +8,10 @@
         <code_version>1.3.1</code_version>
         <code_install_requirement>requirements.txt</code_install_requirement>
         <code_package>renate</code_package>
-        <code_git_link>https://github.com/gergopokol/renate-od.git</code_git_link>
+        <code_git_link>https://github.com/plasma-sds/renate.git</code_git_link>
         <classifier_audience>Intended Audience :: Science/Research</classifier_audience>
         <classifier_natural_language>Natural Language :: English</classifier_natural_language>
-        <classifier_programming_language>Programming Language :: Python :: 3</classifier_programming_language>
+        <classifier_programming_language>Programming Language :: Python :: 3.9</classifier_programming_language>
         <classifier_topic>"Topic :: Scientific/Engineering :: Physics"</classifier_topic>
     </body>
 </xml>
