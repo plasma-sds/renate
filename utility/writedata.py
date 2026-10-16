@@ -1,4 +1,6 @@
 import os
+import h5py
+import numpy
 from utility.getdata import GetData, AccessData
 from lxml import etree
 from utility.accessdata import DEFAULT_SETUP, FALLBACK_SETUP
@@ -39,20 +41,26 @@ class WriteData:
             raise OSError('Beamlet profile data could NOT be written to file: '
                           + os.path.join(subdir, output_path)) from exc
 
-    def write_photon_emission_profile(self, obs_param, emission_profiles, subdir=''):
-        output_path = obs_param.getroot().find('head').find('id').text
-        h5_output_path = os.path.join(self.root_path, subdir, output_path + ".h5")
-        xml_output_path = os.path.join(self.root_path, subdir, output_path + ".xml")
-        GetData.ensure_dir(h5_output_path)
+    def write_observation(self, obs, output_id, subdir=''):
+        if not hasattr(obs, 'photon_flux'):
+            raise ValueError('No photon flux is stored in the observation. '
+                             'Call compute_photon_flux() with <store=True> first.')
+        h5_full_path = os.path.join(self.root_path, subdir, output_id + '.h5')
+        GetData.ensure_dir(h5_full_path)
         try:
-            emission_profiles.to_hdf(path_or_buf=h5_output_path, key='emission_profiles')
-            if not isinstance(obs_param.getroot().find('body').find('emission_profiles'), etree._Element):
-                new_element = etree.Element('emission_profiles')
-                new_element.text = h5_output_path
-                new_element.set('unit', '-')
-                obs_param.getroot().find('body').append(new_element)
-            obs_param.write(xml_output_path)
-            print('Photon emission profile data written to file: ' + output_path)
+            with h5py.File(h5_full_path, 'w') as h5_file:
+                for name, data, unit in (('detector_positions', obs.detector_positions, 'm'),
+                                         ('detector_size', obs.detector_size, 'm'),
+                                         ('detector_ranges', obs.detector_ranges, 'm'),
+                                         ('photon_flux', numpy.atleast_2d(obs.photon_flux), 'ph/s')):
+                    h5_file.create_dataset(name, data=data).attrs['unit'] = unit
+                h5_file.create_dataset('observed_transitions', data=obs.observed_transitions,
+                                       dtype=h5py.string_dtype())
+                h5_file.create_dataset('observed_beamlets', data=['' if source is None else source
+                                                                  for source in obs.observed_beamlets],
+                                       dtype=h5py.string_dtype())
+            print('Observation data written to file: ' + os.path.join(subdir, output_id + '.h5'))
+            return h5_full_path
         except Exception as exc:
-            raise OSError('Photon emission profile data could NOT be written to file: '
-                          + output_path) from exc
+            raise OSError('Observation data could NOT be written to file: '
+                          + os.path.join(subdir, output_id + '.h5')) from exc

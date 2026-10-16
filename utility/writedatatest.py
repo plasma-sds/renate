@@ -2,11 +2,14 @@ import os
 import shutil
 import tempfile
 import unittest
+import h5py
+import numpy
 import pandas
 
 from utility import writedata as writedata_module
 from utility.writedata import WriteData
 from crm_solver.beamlet import Beamlet
+from observation.observation import Obs1D
 
 
 class WriteDataTest(unittest.TestCase):
@@ -116,6 +119,103 @@ class WriteDataTest(unittest.TestCase):
                                msg='write_beamlet_profiles is expected to re-raise '
                                    'as Exception when the inner write fails.'):
             self.writer.write_beamlet_profiles(self.beamlet)
+
+
+class WriteObservationTest(unittest.TestCase):
+    OUTPUT_ID = 'observation_test'
+    SUBDIR = 'subtest'
+    INPUT_POSITIONS = [0.25, 0.5, 1.0]
+    INPUT_SIZE = 0.125
+    INPUT_FLUX = [[1., 2., numpy.nan], [4., 5., 6.]]
+    INPUT_TRANSITIONS = ['2p-->2s', '3p-->2s']
+    INPUT_BEAMLETS = ['beamlet/test_impurity.h5', None]
+    EXPECTED_BEAMLETS = ['beamlet/test_impurity.h5', '']
+    EXPECTED_DATASETS = {'detector_positions', 'detector_size', 'detector_ranges', 'photon_flux',
+                         'observed_transitions', 'observed_beamlets'}
+    EXPECTED_UNITS = {'detector_positions': 'm', 'detector_size': 'm', 'detector_ranges': 'm', 'photon_flux': 'ph/s'}
+
+    def setUp(self):
+        self.tmp_root = tempfile.mkdtemp(prefix='writeobservation_test_')
+        self.writer = WriteData(root_path=self.tmp_root + os.sep)
+        self.obs = Obs1D(self.INPUT_POSITIONS, self.INPUT_SIZE)
+        self._store(self.INPUT_FLUX, self.INPUT_TRANSITIONS, self.INPUT_BEAMLETS)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_root, ignore_errors=True)
+        del self.writer, self.obs
+
+    def _store(self, flux, transitions, beamlets):
+        self.obs.photon_flux = numpy.array(flux)
+        self.obs.observed_transitions = list(transitions)
+        self.obs.observed_beamlets = list(beamlets)
+
+    def test_returns_path(self):
+        path = self.writer.write_observation(self.obs, self.OUTPUT_ID)
+        self.assertEqual(path, os.path.join(self.writer.root_path, self.OUTPUT_ID + '.h5'),
+                         msg='Returned path is expected to equal os.path.join(root_path, <output_id>.h5).')
+        self.assertTrue(os.path.isfile(path), msg='HDF5 output file is expected at: ' + path)
+
+    def test_subdir(self):
+        path = self.writer.write_observation(self.obs, self.OUTPUT_ID, subdir=self.SUBDIR)
+        self.assertTrue(os.path.isfile(path), msg='HDF5 file in subdir is expected at: ' + path)
+        self.assertEqual(os.path.normpath(os.path.dirname(path)),
+                         os.path.normpath(os.path.join(self.writer.root_path, self.SUBDIR)),
+                         msg='subdir is expected to be composed under root_path.')
+
+    def test_contents(self):
+        with h5py.File(self.writer.write_observation(self.obs, self.OUTPUT_ID), 'r') as h5_file:
+            self.assertEqual(set(h5_file.keys()), self.EXPECTED_DATASETS, msg='Unexpected datasets in the file.')
+
+    def test_detector_arrays(self):
+        with h5py.File(self.writer.write_observation(self.obs, self.OUTPUT_ID), 'r') as h5_file:
+            for name in ('detector_positions', 'detector_size', 'detector_ranges'):
+                with self.subTest(dataset=name):
+                    numpy.testing.assert_array_equal(h5_file[name][()], getattr(self.obs, name),
+                                                     err_msg='<' + name + '> is expected to round-trip unchanged.')
+
+    def test_photon_flux(self):
+        with h5py.File(self.writer.write_observation(self.obs, self.OUTPUT_ID), 'r') as h5_file:
+            numpy.testing.assert_array_equal(h5_file['photon_flux'][()], self.INPUT_FLUX,
+                                             err_msg='Photon flux is expected to round-trip unchanged.')
+
+    def test_single_result(self):
+        self._store(self.INPUT_FLUX[1], self.INPUT_TRANSITIONS[:1], self.INPUT_BEAMLETS[:1])
+        with h5py.File(self.writer.write_observation(self.obs, self.OUTPUT_ID), 'r') as h5_file:
+            self.assertEqual(h5_file['photon_flux'].shape, (1, len(self.INPUT_POSITIONS)),
+                             msg='A single photon flux profile is expected to be written as one row.')
+
+    def test_labels(self):
+        with h5py.File(self.writer.write_observation(self.obs, self.OUTPUT_ID), 'r') as h5_file:
+            self.assertEqual(list(h5_file['observed_transitions'].asstr()[()]), self.INPUT_TRANSITIONS,
+                             msg='Transition labels are expected to round-trip unchanged.')
+            self.assertEqual(list(h5_file['observed_beamlets'].asstr()[()]), self.EXPECTED_BEAMLETS,
+                             msg='Beamlet sources are expected to round-trip, with None written as empty string.')
+
+    def test_units(self):
+        with h5py.File(self.writer.write_observation(self.obs, self.OUTPUT_ID), 'r') as h5_file:
+            for name, unit in self.EXPECTED_UNITS.items():
+                with self.subTest(dataset=name):
+                    self.assertEqual(h5_file[name].attrs['unit'], unit, msg='Wrong unit for <' + name + '>.')
+
+    def test_overwrite(self):
+        self.writer.write_observation(self.obs, self.OUTPUT_ID)
+        self._store(self.INPUT_FLUX[1], self.INPUT_TRANSITIONS[:1], self.INPUT_BEAMLETS[:1])
+        with h5py.File(self.writer.write_observation(self.obs, self.OUTPUT_ID), 'r') as h5_file:
+            self.assertEqual(set(h5_file.keys()), self.EXPECTED_DATASETS, msg='Unexpected datasets after overwrite.')
+            self.assertEqual(h5_file['photon_flux'].shape, (1, len(self.INPUT_POSITIONS)),
+                             msg='A second write is expected to replace the file contents.')
+
+    def test_nothing_stored(self):
+        obs = Obs1D(self.INPUT_POSITIONS, self.INPUT_SIZE)
+        with self.assertRaises(ValueError, msg='Writing without stored photon flux is expected to raise ValueError.'):
+            self.writer.write_observation(obs, self.OUTPUT_ID)
+        self.assertFalse(os.path.exists(os.path.join(self.writer.root_path, self.OUTPUT_ID + '.h5')),
+                         msg='No file is expected when nothing is stored.')
+
+    def test_write_failure(self):
+        self.obs.photon_flux = [[object()]]
+        with self.assertRaises(OSError, msg='A failed write is expected to raise OSError.'):
+            self.writer.write_observation(self.obs, self.OUTPUT_ID)
 
 
 if __name__ == '__main__':

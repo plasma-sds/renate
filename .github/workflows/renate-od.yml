@@ -47,13 +47,20 @@ jobs:
             utility.inputtest.BeamletInputTest \
             utility.transitiontest.TransitionTest \
             utility.writedatatest.WriteDataTest \
+            utility.writedatatest.WriteObservationTest \
             observation.noisetest.NoiseGeneratorTest \
             observation.noisetest.APDGeneratorTest \
             observation.noisetest.PMTGeneratorTest \
             observation.noisetest.PPDGeneratorTest \
             observation.noisetest.MPPCGeneratorTest \
             observation.noisetest.DetectorGeneratorTest \
-            observation.noisetest.NoiseRegressionTest; do
+            observation.noisetest.NoiseRegressionTest \
+            observation.observationtest.Obs1DInitTest \
+            observation.observationtest.Obs1DTransitionTest \
+            observation.observationtest.Obs1DEmissionDensityTest \
+            observation.observationtest.Obs1DIntegratorTest \
+            observation.observationtest.Obs1DOutsideGridTest \
+            observation.observationtest.Obs1DPhotonFluxTest; do
           python -m unittest -v "$t" || status=1
         done
         exit $status
